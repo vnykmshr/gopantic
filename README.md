@@ -16,19 +16,22 @@
 
 ## Features ✨
 
-**Phase 1 (Current):**
+**Phase 1 & 2 (Current):**
 - ✅ Basic JSON parsing into typed structs
 - ✅ Type coercion for `int`, `float64`, `string`, `bool`
 - ✅ Struct field mapping using `json` tags
+- ✅ **Validation framework with struct tags**
+- ✅ **Built-in validators: `required`, `min`, `max`, `email`, `alpha`, `alphanum`, `length`**
+- ✅ **Error aggregation with detailed field-level reporting**
 - ✅ Comprehensive error handling and reporting
 - ✅ Zero external dependencies
 
 **Coming Soon:**
-- 🔄 Struct tag validation (`required`, `min`, `max`, `email`)
 - 🔄 YAML support
 - 🔄 Nested struct parsing
 - 🔄 Custom validators
 - 🔄 Time parsing
+- 🔄 Advanced validation features
 
 ## Installation
 
@@ -49,14 +52,14 @@ import (
 )
 
 type User struct {
-    ID    int    `json:"id"`
-    Name  string `json:"name"`
-    Email string `json:"email"`
-    Age   int    `json:"age"`
+    ID    int    `json:"id" validate:"required,min=1"`
+    Name  string `json:"name" validate:"required,min=2,alpha"`
+    Email string `json:"email" validate:"required,email"`
+    Age   int    `json:"age" validate:"min=18,max=120"`
 }
 
 func main() {
-    // JSON with mixed types (strings that should be numbers)
+    // JSON with mixed types (strings that should be numbers) + validation
     raw := []byte(`{"id": "42", "name": "Alice", "email": "alice@example.com", "age": "28"}`)
     
     user, err := model.ParseInto[User](raw)
@@ -106,20 +109,62 @@ gopantic supports flexible boolean parsing:
 - **Truthy:** `"true"`, `"yes"`, `"1"`, `"on"`, `1`, non-zero numbers
 - **Falsy:** `"false"`, `"no"`, `"0"`, `"off"`, `""`, `0`, zero values
 
-## Examples
+## Validation Framework
 
-Run the comprehensive example:
+gopantic includes a powerful validation system using struct tags:
 
-```bash
-go run examples/basic/main.go
+```go
+type UserRegistration struct {
+    Username string `json:"username" validate:"required,min=3,max=20,alphanum"`
+    Email    string `json:"email" validate:"required,email"`
+    Age      int    `json:"age" validate:"required,min=18,max=120"`
+    Bio      string `json:"bio" validate:"max=500"`
+}
+
+// Validation happens automatically during parsing
+user, err := model.ParseInto[UserRegistration](jsonData)
+if err != nil {
+    // err contains detailed validation failures:
+    // "multiple errors: validation error on field "Username": string length must be at least 3 characters; ..."
+}
 ```
 
-This demonstrates:
+### Built-in Validators
+
+| Validator | Description | Example |
+|-----------|-------------|---------|
+| `required` | Field must have non-zero value | `validate:"required"` |
+| `min=N` | Minimum value/length | `validate:"min=3"` |
+| `max=N` | Maximum value/length | `validate:"max=100"` |
+| `length=N` | Exact length | `validate:"length=8"` |
+| `email` | Valid email format | `validate:"email"` |
+| `alpha` | Alphabetic characters only | `validate:"alpha"` |
+| `alphanum` | Alphanumeric characters only | `validate:"alphanum"` |
+
+### Validation Features
+
+- **Error Aggregation**: All validation errors reported together
+- **Type-aware**: Different validation logic for strings, numbers, arrays
+- **Post-coercion**: Validation runs after type coercion
+- **Detailed Messages**: Clear, actionable error messages
+- **Zero Overhead**: No validation impact when tags aren't used
+
+## Examples
+
+Run the comprehensive examples:
+
+```bash
+go run examples/basic/main.go      # Basic parsing and coercion
+go run examples/validation/main.go # Validation framework demo
+```
+
+These demonstrate:
 - Basic parsing and type coercion
+- Validation with multiple rules
+- Error handling and aggregation
 - Mixed data types in JSON
 - Boolean variations
-- Error handling
-- Missing field handling
+- Real-world use cases
 
 ## Error Handling
 

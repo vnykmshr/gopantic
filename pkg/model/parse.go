@@ -22,6 +22,9 @@ func ParseInto[T any](raw []byte) (T, error) {
 	resultValue := reflect.New(reflect.TypeOf(zero)).Elem()
 	resultType := resultValue.Type()
 
+	// Parse validation rules for this struct type
+	validation := ParseValidationTags(resultType)
+
 	// Process each field in the struct
 	for i := 0; i < resultType.NumField(); i++ {
 		field := resultType.Field(i)
@@ -42,11 +45,17 @@ func ParseInto[T any](raw []byte) (T, error) {
 		rawValue, exists := data[jsonKey]
 		if !exists {
 			// Field not present in JSON, leave as zero value
-			continue
+			rawValue = nil
 		}
 
 		// Coerce and set the value
 		if err := setFieldValue(fieldValue, rawValue, field.Name); err != nil {
+			errors.Add(err)
+			continue // Skip validation if coercion failed
+		}
+
+		// Apply validation rules
+		if err := validateFieldValue(field.Name, jsonKey, fieldValue.Interface(), validation); err != nil {
 			errors.Add(err)
 		}
 	}
@@ -114,4 +123,18 @@ func getJSONKey(field reflect.StructField) string {
 	}
 
 	return tag
+}
+
+// validateFieldValue applies validation rules to a field value
+func validateFieldValue(fieldName, jsonKey string, value interface{}, validation *StructValidation) error {
+	// Find validation rules for this field
+	for _, fieldValidation := range validation.Fields {
+		if fieldValidation.FieldName == fieldName || fieldValidation.JSONKey == jsonKey {
+			// Apply all validation rules for this field
+			return ValidateValue(fieldName, value, fieldValidation.Rules)
+		}
+	}
+
+	// No validation rules found for this field
+	return nil
 }
