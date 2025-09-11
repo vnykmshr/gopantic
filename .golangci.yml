@@ -1,0 +1,99 @@
+run:
+  timeout: 5m
+  issues-exit-code: 1
+  tests: true
+  modules-download-mode: readonly
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+  uniq-by-line: true
+
+linters:
+  disable-all: true
+  enable:
+    # Standard linters
+    - errcheck      # Check for unchecked errors
+    - gosimple      # Simplify Go code
+    - govet         # Go vet
+    - ineffassign   # Detect ineffectual assignments
+    - staticcheck   # Go staticcheck
+    - typecheck     # Type checking
+    - unused        # Check for unused code
+
+    # Additional recommended linters
+    - gofmt         # Check formatting
+    - goimports     # Check imports
+    - misspell      # Check spelling
+    - revive        # Drop-in replacement for golint
+    - unconvert     # Remove unnecessary type conversions
+    - unparam       # Check for unused function parameters
+    - gocritic      # Go critic
+    - gocyclo       # Check cyclomatic complexity
+    - dupl          # Check for duplicated code
+    - gosec         # Security checker
+    - prealloc      # Find slice declarations with non-zero initial length
+    - exportloopref # Check for loop variable capture
+
+linters-settings:
+  gocyclo:
+    min-complexity: 15
+
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - style
+      - performance
+    disabled-checks:
+      - unnamedResult
+      - hugeParam
+
+  revive:
+    min-confidence: 0.8
+    rules:
+      - name: var-naming
+      - name: package-comments
+      - name: exported
+      - name: var-declaration
+      - name: blank-imports
+      - name: context-as-argument
+      - name: dot-imports
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: increment-decrement
+      - name: range
+      - name: receiver-naming
+      - name: time-naming
+      - name: unexported-return
+      - name: indent-error-flow
+      - name: errorf
+
+  gosec:
+    excludes:
+      - G404 # Insecure random number source (rand)
+
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  
+  exclude-rules:
+    # Exclude some linters from running on tests files
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - dupl
+        - gosec
+        
+    # Exclude known linters from generated files
+    - path: ".*\\.pb\\.go"
+      linters:
+        - revive
+        - stylecheck
+        
+  exclude:
+    # Exclude common false positives
+    - "Error return value of .((os\\.)?std(out|err)\\..*|.*Close|.*Flush|os\\.Remove(All)?|.*printf?|os\\.(Un)?Setenv). is not checked"
