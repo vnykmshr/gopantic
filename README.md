@@ -26,12 +26,12 @@
 - ✅ **Nested struct parsing and validation with field paths**
 - ✅ **Time parsing with multiple formats (RFC3339, Unix timestamps, custom formats)**
 - ✅ **Slice and array parsing with element validation**
+- ✅ **Pointer type support for optional fields (`*string`, `*int`, `*bool`, etc.)**
 - ✅ Comprehensive error handling and reporting
 - ✅ Zero external dependencies
 
 **Coming Soon:**
 - 🔄 YAML support
-- 🔄 Pointer type handling
 - 🔄 Custom validators
 - 🔄 Cross-field validation
 - 🔄 Advanced validation features
@@ -254,7 +254,7 @@ See our [comprehensive implementation plan](todos/todos.md) with 6 phases:
 
 1. ✅ **Phase 1:** Core Foundation & Basic Parsing
 2. ✅ **Phase 2:** Validation Framework
-3. 🔄 **Phase 3:** Extended Type Support (75% complete - nested structs, time parsing, arrays/slices done)
+3. 🔄 **Phase 3:** Extended Type Support (90% complete - nested structs, time parsing, arrays/slices, pointers done)
 4. 📋 **Phase 4:** YAML Support
 5. 📋 **Phase 5:** Advanced Validation
 6. 📋 **Phase 6:** Performance & Polish
