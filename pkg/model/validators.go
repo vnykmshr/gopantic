@@ -15,6 +15,7 @@ func (v *RequiredValidator) Name() string {
 	return "required"
 }
 
+// Validate checks that a field has a non-zero value
 func (v *RequiredValidator) Validate(fieldName string, value interface{}) error {
 	if value == nil {
 		return NewValidationError(fieldName, value, "required", "field is required")
@@ -71,6 +72,7 @@ func (v *MinValidator) Name() string {
 	return "min"
 }
 
+// Validate checks that a numeric value or string length is at least the minimum
 func (v *MinValidator) Validate(fieldName string, value interface{}) error {
 	if value == nil {
 		return nil // nil values are handled by required validator
@@ -121,6 +123,7 @@ func (v *MaxValidator) Name() string {
 	return "max"
 }
 
+// Validate checks that a numeric value or string length is at most the maximum
 func (v *MaxValidator) Validate(fieldName string, value interface{}) error {
 	if value == nil {
 		return nil // nil values are handled by required validator
@@ -173,6 +176,7 @@ func (v *EmailValidator) Name() string {
 // This is intentionally not RFC 5322 compliant for simplicity and performance
 var emailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
 
+// Validate checks if the value is a valid email address
 func (v *EmailValidator) Validate(fieldName string, value interface{}) error {
 	if value == nil {
 		return nil // nil values are handled by required validator

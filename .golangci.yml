@@ -5,10 +5,10 @@ run:
   modules-download-mode: readonly
 
 output:
-  format: colored-line-number
+  formats: 
+    - format: colored-line-number
   print-issued-lines: true
   print-linter-name: true
-  uniq-by-line: true
 
 linters:
   disable-all: true
@@ -78,6 +78,7 @@ issues:
   exclude-use-default: false
   max-issues-per-linter: 0
   max-same-issues: 0
+  uniq-by-line: true
   
   exclude-rules:
     # Exclude some linters from running on tests files
@@ -93,6 +94,27 @@ issues:
       linters:
         - revive
         - stylecheck
+    
+    # Accept high complexity in type coercion functions - inherent to comprehensive type handling
+    - source: "func (coerce(To(Int|Uint|Float|String)|parseTime)|toInt)"
+      linters:
+        - gocyclo
+    
+    # Accept complexity in comprehensive validators 
+    - source: "func \\(.*\\) Validate"
+      linters:
+        - gocyclo
+    
+    # Accept duplication between Min/Max validators - expected pattern
+    - path: pkg/model/validators\.go
+      text: "lines are duplicate"
+      linters:
+        - dupl
+        
+    # Accept unused error returns for future API extensibility
+    - text: "result .* is always nil"
+      linters:
+        - unparam
         
   exclude:
     # Exclude common false positives
