@@ -111,6 +111,8 @@ func setFieldValue(fieldValue reflect.Value, rawValue interface{}, fieldName str
 		fieldValue.Set(reflect.ValueOf(coercedValue))
 	case reflect.Struct:
 		fieldValue.Set(reflect.ValueOf(coercedValue))
+	case reflect.Ptr:
+		fieldValue.Set(reflect.ValueOf(coercedValue))
 	default:
 		return NewParseError(fieldName, rawValue, fieldType.String(),
 			fmt.Sprintf("unsupported field type: %s", fieldType))

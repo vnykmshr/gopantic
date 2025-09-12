@@ -37,6 +37,8 @@ func CoerceValue(value interface{}, targetType reflect.Type, fieldName string) (
 		return coerceToArray(value, targetType, fieldName)
 	case reflect.Struct:
 		return coerceToStruct(value, targetType, fieldName)
+	case reflect.Ptr:
+		return coerceToPointer(value, targetType, fieldName)
 	default:
 		return nil, NewParseError(fieldName, value, targetType.String(),
 			fmt.Sprintf("coercion to %s not supported", targetType))
@@ -466,6 +468,9 @@ func getZeroValueForType(t reflect.Type) interface{} {
 		return reflect.Zero(t).Interface()
 	case reflect.Struct:
 		return reflect.Zero(t).Interface()
+	case reflect.Ptr:
+		// For pointers, zero value is nil
+		return reflect.Zero(t).Interface()
 	default:
 		// Fall back to kind-based zero values
 		return getZeroValue(t.Kind())
@@ -521,4 +526,44 @@ func updateFieldPaths(err error, nestedFieldName, _ string) error {
 		// For other error types, return as-is
 		return err
 	}
+}
+
+// coerceToPointer handles pointer types by coercing to the underlying type and creating a pointer
+func coerceToPointer(value interface{}, targetType reflect.Type, fieldName string) (interface{}, error) {
+	// If value is nil, return a nil pointer
+	if value == nil {
+		return reflect.Zero(targetType).Interface(), nil
+	}
+
+	// Get the element type (what the pointer points to)
+	elemType := targetType.Elem()
+
+	// Coerce the value to the element type
+	coercedValue, err := CoerceValue(value, elemType, fieldName)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create a pointer to the coerced value
+	ptrValue := reflect.New(elemType)
+
+	// Convert coercedValue to reflect.Value and ensure it matches the target type exactly
+	coercedReflectValue := reflect.ValueOf(coercedValue)
+
+	// Handle type conversion for numeric types if needed
+	if coercedReflectValue.Type() != elemType {
+		// If both are numeric types, convert
+		if coercedReflectValue.Kind() >= reflect.Int && coercedReflectValue.Kind() <= reflect.Float64 &&
+			elemType.Kind() >= reflect.Int && elemType.Kind() <= reflect.Float64 {
+			convertedValue := coercedReflectValue.Convert(elemType)
+			ptrValue.Elem().Set(convertedValue)
+		} else {
+			return nil, NewParseError(fieldName, value, targetType.String(),
+				fmt.Sprintf("cannot assign %s to %s", coercedReflectValue.Type(), elemType))
+		}
+	} else {
+		ptrValue.Elem().Set(coercedReflectValue)
+	}
+
+	return ptrValue.Interface(), nil
 }

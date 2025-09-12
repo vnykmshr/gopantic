@@ -16,21 +16,24 @@
 
 ## Features ✨
 
-**Phase 1 & 2 (Current):**
+**Phase 1, 2 & 3 (Current):**
 - ✅ Basic JSON parsing into typed structs
 - ✅ Type coercion for `int`, `float64`, `string`, `bool`
 - ✅ Struct field mapping using `json` tags
 - ✅ **Validation framework with struct tags**
 - ✅ **Built-in validators: `required`, `min`, `max`, `email`, `alpha`, `alphanum`, `length`**
 - ✅ **Error aggregation with detailed field-level reporting**
+- ✅ **Nested struct parsing and validation with field paths**
+- ✅ **Time parsing with multiple formats (RFC3339, Unix timestamps, custom formats)**
+- ✅ **Slice and array parsing with element validation**
 - ✅ Comprehensive error handling and reporting
 - ✅ Zero external dependencies
 
 **Coming Soon:**
 - 🔄 YAML support
-- 🔄 Nested struct parsing
+- 🔄 Pointer type handling
 - 🔄 Custom validators
-- 🔄 Time parsing
+- 🔄 Cross-field validation
 - 🔄 Advanced validation features
 
 ## Installation
@@ -47,20 +50,40 @@ package main
 import (
     "fmt"
     "log"
+    "time"
     
     "github.com/vnykmshr/gopantic/pkg/model"
 )
 
+type Address struct {
+    Street string `json:"street" validate:"required,min=5"`
+    City   string `json:"city" validate:"required,min=2"`
+    Zip    string `json:"zip" validate:"required,length=5"`
+}
+
 type User struct {
-    ID    int    `json:"id" validate:"required,min=1"`
-    Name  string `json:"name" validate:"required,min=2,alpha"`
-    Email string `json:"email" validate:"required,email"`
-    Age   int    `json:"age" validate:"min=18,max=120"`
+    ID        int       `json:"id" validate:"required,min=1"`
+    Name      string    `json:"name" validate:"required,min=2,alpha"`
+    Email     string    `json:"email" validate:"required,email"`
+    Age       int       `json:"age" validate:"min=18,max=120"`
+    Address   Address   `json:"address" validate:"required"`
+    CreatedAt time.Time `json:"created_at"`
 }
 
 func main() {
-    // JSON with mixed types (strings that should be numbers) + validation
-    raw := []byte(`{"id": "42", "name": "Alice", "email": "alice@example.com", "age": "28"}`)
+    // JSON with nested structs, time parsing, and mixed types
+    raw := []byte(`{
+        "id": "42", 
+        "name": "Alice", 
+        "email": "alice@example.com", 
+        "age": "28",
+        "address": {
+            "street": "123 Main St",
+            "city": "Springfield", 
+            "zip": "12345"
+        },
+        "created_at": "2023-01-15T10:30:00Z"
+    }`)
     
     user, err := model.ParseInto[User](raw)
     if err != nil {
@@ -68,7 +91,7 @@ func main() {
     }
     
     fmt.Printf("%+v\n", user)
-    // Output: {ID:42 Name:Alice Email:alice@example.com Age:28}
+    // Output: {ID:42 Name:Alice Email:alice@example.com Age:28 Address:{Street:123 Main St City:Springfield Zip:12345} CreatedAt:2023-01-15 10:30:00 +0000 UTC}
 }
 ```
 
@@ -156,12 +179,16 @@ Run the comprehensive examples:
 ```bash
 go run examples/basic/main.go      # Basic parsing and coercion
 go run examples/validation/main.go # Validation framework demo
+go run examples/time_parsing/main.go # Time parsing with multiple formats
 ```
 
 These demonstrate:
 - Basic parsing and type coercion
 - Validation with multiple rules
-- Error handling and aggregation
+- Nested struct parsing with validation
+- Time parsing (RFC3339, Unix timestamps, custom formats)
+- Slice and array parsing with element validation
+- Error handling and aggregation with field paths
 - Mixed data types in JSON
 - Boolean variations
 - Real-world use cases
@@ -226,8 +253,8 @@ This project maintains high code quality with:
 See our [comprehensive implementation plan](todos/todos.md) with 6 phases:
 
 1. ✅ **Phase 1:** Core Foundation & Basic Parsing
-2. 🔄 **Phase 2:** Validation Framework
-3. 📋 **Phase 3:** Extended Type Support
+2. ✅ **Phase 2:** Validation Framework
+3. 🔄 **Phase 3:** Extended Type Support (75% complete - nested structs, time parsing, arrays/slices done)
 4. 📋 **Phase 4:** YAML Support
 5. 📋 **Phase 5:** Advanced Validation
 6. 📋 **Phase 6:** Performance & Polish

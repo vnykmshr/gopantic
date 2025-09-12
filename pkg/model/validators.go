@@ -79,6 +79,15 @@ func (v *MinValidator) Validate(fieldName string, value interface{}) error {
 	}
 
 	val := reflect.ValueOf(value)
+
+	// Handle pointer types by dereferencing them
+	if val.Kind() == reflect.Ptr {
+		if val.IsNil() {
+			return nil // nil pointers are not validated
+		}
+		val = val.Elem()
+	}
+
 	switch val.Kind() {
 	case reflect.String:
 		if float64(len(val.String())) < v.Min {
@@ -130,6 +139,15 @@ func (v *MaxValidator) Validate(fieldName string, value interface{}) error {
 	}
 
 	val := reflect.ValueOf(value)
+
+	// Handle pointer types by dereferencing them
+	if val.Kind() == reflect.Ptr {
+		if val.IsNil() {
+			return nil // nil pointers are not validated
+		}
+		val = val.Elem()
+	}
+
 	switch val.Kind() {
 	case reflect.String:
 		if float64(len(val.String())) > v.Max {
@@ -182,13 +200,23 @@ func (v *EmailValidator) Validate(fieldName string, value interface{}) error {
 		return nil // nil values are handled by required validator
 	}
 
+	// Handle pointer types by dereferencing them
+	actualValue := value
+	val := reflect.ValueOf(value)
+	if val.Kind() == reflect.Ptr {
+		if val.IsNil() {
+			return nil // nil pointers are not validated
+		}
+		actualValue = val.Elem().Interface()
+	}
+
 	// Convert to string
 	var email string
-	switch v := value.(type) {
+	switch v := actualValue.(type) {
 	case string:
 		email = v
 	default:
-		email = fmt.Sprintf("%v", value)
+		email = fmt.Sprintf("%v", actualValue)
 	}
 
 	// Skip validation for empty strings (handled by required validator)
@@ -261,6 +289,15 @@ func (v *LengthValidator) Validate(fieldName string, value interface{}) error {
 	}
 
 	val := reflect.ValueOf(value)
+
+	// Handle pointer types by dereferencing them
+	if val.Kind() == reflect.Ptr {
+		if val.IsNil() {
+			return nil // nil pointers are not validated
+		}
+		val = val.Elem()
+	}
+
 	var actualLength int
 
 	switch val.Kind() {
@@ -297,7 +334,17 @@ func (v *AlphaValidator) Validate(fieldName string, value interface{}) error {
 		return nil // nil values are handled by required validator
 	}
 
-	str, ok := value.(string)
+	// Handle pointer types by dereferencing them
+	actualValue := value
+	val := reflect.ValueOf(value)
+	if val.Kind() == reflect.Ptr {
+		if val.IsNil() {
+			return nil // nil pointers are not validated
+		}
+		actualValue = val.Elem().Interface()
+	}
+
+	str, ok := actualValue.(string)
 	if !ok {
 		return NewValidationError(fieldName, value, "alpha", "value must be a string")
 	}
@@ -329,7 +376,17 @@ func (v *AlphanumValidator) Validate(fieldName string, value interface{}) error 
 		return nil // nil values are handled by required validator
 	}
 
-	str, ok := value.(string)
+	// Handle pointer types by dereferencing them
+	actualValue := value
+	val := reflect.ValueOf(value)
+	if val.Kind() == reflect.Ptr {
+		if val.IsNil() {
+			return nil // nil pointers are not validated
+		}
+		actualValue = val.Elem().Interface()
+	}
+
+	str, ok := actualValue.(string)
 	if !ok {
 		return NewValidationError(fieldName, value, "alphanum", "value must be a string")
 	}
