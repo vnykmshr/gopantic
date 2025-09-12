@@ -3,23 +3,113 @@ package model
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"reflect"
 	"time"
 
+	"github.com/redis/go-redis/v9"
 	"github.com/vnykmshr/obcache-go/pkg/obcache"
 )
 
-// CacheConfig holds configuration options for the cached parser
+// CacheBackend defines the type of cache backend
+type CacheBackend string
+
+const (
+	// CacheBackendMemory uses in-memory caching (default)
+	CacheBackendMemory CacheBackend = "memory"
+	// CacheBackendRedis uses Redis for distributed caching
+	CacheBackendRedis CacheBackend = "redis"
+)
+
+// RedisConfig holds Redis-specific configuration options for distributed caching.
+// It supports both simple address-based configuration and advanced pre-configured client usage.
+//
+// Simple configuration example:
+//
+//	redisConfig := &RedisConfig{
+//	    Addr:      "localhost:6379",
+//	    Password:  "mypassword",
+//	    DB:        1,
+//	    KeyPrefix: "myapp:",
+//	}
+//
+// Advanced configuration with pre-configured client:
+//
+//	client := redis.NewClient(&redis.Options{
+//	    Addr:     "localhost:6379",
+//	    Password: "mypassword",
+//	    DB:       1,
+//	})
+//	redisConfig := &RedisConfig{
+//	    Client:    client,
+//	    KeyPrefix: "myapp:",
+//	}
+type RedisConfig struct {
+	// Addr is the Redis server address (e.g., "localhost:6379").
+	// Required if Client is not provided.
+	Addr string
+	// Password is the Redis authentication password.
+	// Optional, leave empty if Redis has no authentication.
+	Password string
+	// DB is the Redis database number (0-15).
+	// Default is 0. Different databases provide isolation between applications.
+	DB int
+	// KeyPrefix is an additional prefix for all cache keys.
+	// Helps avoid key collisions when multiple applications use the same Redis instance.
+	// Default is "gopantic:" when using DefaultRedisCacheConfig.
+	KeyPrefix string
+	// Client is a pre-configured Redis client (optional).
+	// If provided, Addr, Password, and DB settings are ignored.
+	// Use this for advanced Redis configurations like clustering, sentinel, etc.
+	Client redis.Cmdable
+}
+
+// CacheConfig holds configuration options for the cached parser.
+// Supports both in-memory and Redis distributed caching backends.
+//
+// Memory backend example (default):
+//
+//	config := &CacheConfig{
+//	    TTL:        time.Hour,
+//	    MaxEntries: 1000,
+//	    Backend:    CacheBackendMemory, // or leave empty
+//	}
+//
+// Redis backend example:
+//
+//	config := &CacheConfig{
+//	    TTL:     time.Hour,
+//	    Backend: CacheBackendRedis,
+//	    RedisConfig: &RedisConfig{
+//	        Addr: "localhost:6379",
+//	        DB:   0,
+//	    },
+//	}
+//
+// Or use the convenience function:
+//
+//	config := DefaultRedisCacheConfig("localhost:6379")
 type CacheConfig struct {
-	// TTL is the time-to-live for cached entries
+	// TTL is the time-to-live for cached entries.
+	// Applies to both memory and Redis backends.
 	TTL time.Duration
-	// MaxEntries is the maximum number of entries to keep in cache
+	// MaxEntries is the maximum number of entries to keep in cache.
+	// Only used for memory backend; Redis uses its own memory management.
 	MaxEntries int
-	// CompressionEnabled enables compression for cached values
+	// CompressionEnabled enables compression for cached values.
+	// Reduces memory usage and network transfer for Redis backend.
 	CompressionEnabled bool
-	// Namespace is a prefix for cache keys to avoid collisions
+	// Namespace is a prefix for cache keys to avoid collisions.
+	// Especially important for Redis to isolate different applications/environments.
 	Namespace string
+	// Backend specifies the cache backend type.
+	// Use CacheBackendMemory for single-instance in-memory caching (default).
+	// Use CacheBackendRedis for distributed caching across multiple instances.
+	Backend CacheBackend
+	// RedisConfig holds Redis-specific configuration.
+	// Required when Backend is CacheBackendRedis, ignored otherwise.
+	RedisConfig *RedisConfig
 }
 
 // DefaultCacheConfig returns a reasonable default configuration
@@ -29,6 +119,34 @@ func DefaultCacheConfig() *CacheConfig {
 		MaxEntries:         1000,               // 1000 entries max
 		CompressionEnabled: true,               // Enable compression by default
 		Namespace:          "gopantic:parsing", // Default namespace
+		Backend:            CacheBackendMemory, // Default to memory backend
+	}
+}
+
+// DefaultRedisCacheConfig returns a default Redis cache configuration for distributed caching.
+// This enables high-performance distributed caching across multiple application instances.
+//
+// Example usage:
+//
+//	config := model.DefaultRedisCacheConfig("localhost:6379")
+//	parser, err := model.NewCachedParser[User](config)
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//	defer parser.Close()
+//
+//	result, err := parser.Parse(jsonData)
+func DefaultRedisCacheConfig(addr string) *CacheConfig {
+	return &CacheConfig{
+		TTL:                time.Hour,          // 1 hour default TTL
+		CompressionEnabled: true,               // Enable compression by default
+		Namespace:          "gopantic:parsing", // Default namespace
+		Backend:            CacheBackendRedis,  // Redis backend
+		RedisConfig: &RedisConfig{
+			Addr:      addr,        // Redis server address
+			DB:        0,           // Default database
+			KeyPrefix: "gopantic:", // Redis key prefix
+		},
 	}
 }
 
@@ -38,17 +156,81 @@ type CachedParser[T any] struct {
 	config *CacheConfig
 }
 
-// NewCachedParser creates a new cached parser with the given configuration
+// NewCachedParser creates a new cached parser with the given configuration.
+// Supports both in-memory and Redis distributed caching backends.
+//
+// Memory backend usage:
+//
+//	parser, err := model.NewCachedParser[User](model.DefaultCacheConfig())
+//
+// Redis backend usage:
+//
+//	config := model.DefaultRedisCacheConfig("localhost:6379")
+//	parser, err := model.NewCachedParser[User](config)
+//
+// Advanced Redis configuration:
+//
+//	config := &model.CacheConfig{
+//	    Backend: model.CacheBackendRedis,
+//	    TTL:     30 * time.Minute,
+//	    RedisConfig: &model.RedisConfig{
+//	        Addr:      "redis.example.com:6379",
+//	        Password:  "secret",
+//	        DB:        1,
+//	        KeyPrefix: "myapp:",
+//	    },
+//	}
+//	parser, err := model.NewCachedParser[User](config)
+//
+// The parser will gracefully handle Redis connection failures by returning an error.
+// Always defer parser.Close() to properly clean up resources.
 func NewCachedParser[T any](config *CacheConfig) (*CachedParser[T], error) {
 	if config == nil {
 		config = DefaultCacheConfig()
 	}
 
-	// Create cache with default config first
-	cacheConfig := obcache.NewDefaultConfig()
+	var cacheConfig *obcache.Config
+	var err error
 
-	// Apply our custom settings
-	cacheConfig = cacheConfig.WithMaxEntries(config.MaxEntries).WithDefaultTTL(config.TTL)
+	// Configure cache backend based on config
+	switch config.Backend {
+	case CacheBackendMemory, "": // Default to memory for backward compatibility
+		cacheConfig = obcache.NewDefaultConfig()
+		cacheConfig = cacheConfig.WithMaxEntries(config.MaxEntries).WithDefaultTTL(config.TTL)
+
+	case CacheBackendRedis:
+		// Validate Redis configuration
+		if config.RedisConfig == nil {
+			return nil, errors.New("Redis backend requires RedisConfig to be set")
+		}
+
+		if config.RedisConfig.Client != nil {
+			// Use pre-configured client
+			cacheConfig = obcache.NewRedisConfigWithClient(config.RedisConfig.Client)
+		} else {
+			// Create new Redis connection
+			if config.RedisConfig.Addr == "" {
+				return nil, errors.New("Redis address is required when Client is not provided")
+			}
+			cacheConfig = obcache.NewRedisConfig(config.RedisConfig.Addr)
+		}
+
+		// Apply Redis-specific settings
+		redisConfig := &obcache.RedisConfig{
+			Addr:      config.RedisConfig.Addr,
+			Password:  config.RedisConfig.Password,
+			DB:        config.RedisConfig.DB,
+			KeyPrefix: config.RedisConfig.KeyPrefix,
+		}
+		if config.RedisConfig.Client != nil {
+			redisConfig.Client = config.RedisConfig.Client
+		}
+
+		cacheConfig = cacheConfig.WithRedis(redisConfig).WithDefaultTTL(config.TTL)
+
+	default:
+		return nil, fmt.Errorf("unsupported cache backend: %s", config.Backend)
+	}
 
 	cache, err := obcache.New(cacheConfig)
 	if err != nil {

@@ -225,5 +225,118 @@ server:
 		fmt.Println()
 	}
 
-	fmt.Println("=== Demo Complete ===")
+	// Example 5: Redis distributed caching (if Redis is available)
+	fmt.Println("\n5. Redis Distributed Caching:")
+
+	// Try to create a Redis cache parser
+	redisConfig := model.DefaultRedisCacheConfig("localhost:6379")
+	redisConfig.TTL = 2 * time.Minute
+	redisConfig.RedisConfig.DB = 0 // Use default database
+	redisConfig.RedisConfig.KeyPrefix = "gopantic-demo:"
+
+	redisParser, err := model.NewCachedParser[User](redisConfig)
+	if err != nil {
+		fmt.Printf("Redis not available, skipping Redis demo: %v\n", err)
+	} else {
+		defer redisParser.Close()
+
+		fmt.Println("Redis cache configured successfully!")
+
+		redisUserData := []byte(`{
+			"id": 999,
+			"name": "Redis User", 
+			"email": "redis@example.com",
+			"age": 35
+		}`)
+
+		// First parse with Redis - cache miss
+		fmt.Println("First Redis parse (cache miss):")
+		start := time.Now()
+		redisUser1, err := redisParser.Parse(redisUserData)
+		redisDuration1 := time.Since(start)
+		if err != nil {
+			log.Printf("Redis parse error: %v", err)
+		} else {
+			fmt.Printf("Result: %+v\n", redisUser1)
+			fmt.Printf("Duration: %v\n", redisDuration1)
+		}
+
+		// Second parse with Redis - cache hit from distributed cache
+		fmt.Println("\nSecond Redis parse (distributed cache hit):")
+		start = time.Now()
+		redisUser2, err := redisParser.Parse(redisUserData)
+		redisDuration2 := time.Since(start)
+		if err != nil {
+			log.Printf("Redis parse error: %v", err)
+		} else {
+			fmt.Printf("Result: %+v\n", redisUser2)
+			fmt.Printf("Duration: %v\n", redisDuration2)
+
+			// Show performance improvement
+			if redisDuration1 > redisDuration2 {
+				improvement := float64(redisDuration1) / float64(redisDuration2)
+				fmt.Printf("Redis cache speedup: %.2fx faster\n", improvement)
+			}
+		}
+
+		// Show Redis cache statistics
+		redisStats := redisParser.Stats()
+		fmt.Printf("\nRedis Cache Statistics:\n")
+		fmt.Printf("- Hits: %d\n", redisStats.Hits())
+		fmt.Printf("- Misses: %d\n", redisStats.Misses())
+		fmt.Printf("- Hit Rate: %.2f%%\n", redisStats.HitRate())
+		fmt.Printf("- Total Requests: %d\n", redisStats.Total())
+		fmt.Printf("- Key Count: %d\n", redisStats.KeyCount())
+	}
+
+	// Example 6: Advanced Redis configuration
+	fmt.Println("\n6. Advanced Redis Configuration:")
+
+	advancedRedisConfig := &model.CacheConfig{
+		TTL:                3 * time.Minute,
+		CompressionEnabled: true,
+		Namespace:          "myapp:advanced",
+		Backend:            model.CacheBackendRedis,
+		RedisConfig: &model.RedisConfig{
+			Addr:      "localhost:6379",
+			Password:  "", // Set password if needed
+			DB:        1,  // Use database 1
+			KeyPrefix: "advanced-demo:",
+		},
+	}
+
+	advancedParser, err := model.NewCachedParser[Config](advancedRedisConfig)
+	if err != nil {
+		fmt.Printf("Advanced Redis config not available: %v\n", err)
+	} else {
+		defer advancedParser.Close()
+
+		fmt.Println("Advanced Redis configuration successful!")
+		fmt.Printf("- Backend: %s\n", advancedRedisConfig.Backend)
+		fmt.Printf("- Redis Address: %s\n", advancedRedisConfig.RedisConfig.Addr)
+		fmt.Printf("- Redis Database: %d\n", advancedRedisConfig.RedisConfig.DB)
+		fmt.Printf("- Key Prefix: %s\n", advancedRedisConfig.RedisConfig.KeyPrefix)
+		fmt.Printf("- TTL: %v\n", advancedRedisConfig.TTL)
+
+		// Test with configuration data
+		configData := []byte(`{
+			"database": {
+				"host": "redis-demo.local",
+				"port": 5432
+			},
+			"server": {
+				"port": 8080
+			}
+		}`)
+
+		config, err := advancedParser.Parse(configData)
+		if err != nil {
+			fmt.Printf("Advanced Redis parse error: %v\n", err)
+		} else {
+			fmt.Printf("Advanced config parsed: Database=%s:%d, Server=%d\n",
+				config.Database.Host, config.Database.Port, config.Server.Port)
+		}
+	}
+
+	fmt.Println("\n=== Demo Complete ===")
 }
