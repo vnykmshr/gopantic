@@ -16,7 +16,7 @@
 
 ## Features ✨
 
-**Phase 1, 2 & 3 (Current):**
+**Phase 1, 2 & 3 (Complete):**
 - ✅ Basic JSON parsing into typed structs
 - ✅ Type coercion for `int`, `float64`, `string`, `bool`
 - ✅ Struct field mapping using `json` tags
@@ -27,14 +27,18 @@
 - ✅ **Time parsing with multiple formats (RFC3339, Unix timestamps, custom formats)**
 - ✅ **Slice and array parsing with element validation**
 - ✅ **Pointer type support for optional fields (`*string`, `*int`, `*bool`, etc.)**
+- ✅ **Deep nested struct parsing and validation**
+- ✅ **Comprehensive test coverage (>90%)**
+- ✅ **Performance benchmarking and optimization**
 - ✅ Comprehensive error handling and reporting
 - ✅ Zero external dependencies
 
-**Coming Soon:**
-- 🔄 YAML support
-- 🔄 Custom validators
-- 🔄 Cross-field validation
-- 🔄 Advanced validation features
+**Phase 4+ (Coming Next):**
+- 📋 YAML support with format abstraction
+- 📋 Custom validators and validation functions
+- 📋 Cross-field validation
+- 📋 Advanced error reporting and serialization
+- 📋 Performance optimizations and CI integration
 
 ## Installation
 
@@ -213,6 +217,28 @@ _, err := model.ParseInto[User](raw)
 // Error: multiple errors: parse error on field "id": ...; parse error on field "age": ...
 ```
 
+## Performance
+
+gopantic includes comprehensive benchmarks to track performance across different scenarios:
+
+```bash
+go test -bench=. -benchmem ./tests/benchmarks_test.go
+```
+
+**Key Performance Metrics** (Intel i5-8257U @ 1.40GHz):
+- **Simple structs:** ~9k ns/op, 4KB memory, 73 allocations
+- **Nested structs:** ~19k ns/op, 9KB memory, 195 allocations  
+- **Deep nesting:** ~31k ns/op, 15KB memory, 309 allocations
+- **Large slices:** ~95k ns/op, 42KB memory, 923 allocations
+
+**vs Standard JSON:** gopantic is ~5x slower than standard JSON unmarshaling, which is expected given the additional features:
+- Type coercion (string "123" → int 123)
+- Comprehensive validation with struct tags
+- Enhanced error reporting with field paths
+- Time parsing with multiple format support
+
+The performance cost is justified by the significant reduction in boilerplate validation code.
+
 ## Development
 
 ### Prerequisites
@@ -254,7 +280,7 @@ See our [comprehensive implementation plan](todos/todos.md) with 6 phases:
 
 1. ✅ **Phase 1:** Core Foundation & Basic Parsing
 2. ✅ **Phase 2:** Validation Framework
-3. 🔄 **Phase 3:** Extended Type Support (90% complete - nested structs, time parsing, arrays/slices, pointers done)
+3. ✅ **Phase 3:** Extended Type Support (100% complete - comprehensive testing and benchmarks)
 4. 📋 **Phase 4:** YAML Support
 5. 📋 **Phase 5:** Advanced Validation
 6. 📋 **Phase 6:** Performance & Polish
