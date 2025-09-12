@@ -4,14 +4,22 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"time"
 )
 
 // CoerceValue attempts to coerce a value to the target type
-func CoerceValue(value interface{}, targetKind reflect.Kind, fieldName string) (interface{}, error) {
+func CoerceValue(value interface{}, targetType reflect.Type, fieldName string) (interface{}, error) {
 	if value == nil {
-		return getZeroValue(targetKind), nil
+		return getZeroValueForType(targetType), nil
 	}
 
+	// Handle specific struct types first
+	if targetType == reflect.TypeOf(time.Time{}) {
+		return coerceToTime(value, fieldName)
+	}
+
+	// Fall back to kind-based coercion
+	targetKind := targetType.Kind()
 	switch targetKind {
 	case reflect.String:
 		return coerceToString(value, fieldName)
@@ -24,8 +32,8 @@ func CoerceValue(value interface{}, targetKind reflect.Kind, fieldName string) (
 	case reflect.Bool:
 		return coerceToBool(value, fieldName)
 	default:
-		return nil, NewParseError(fieldName, value, targetKind.String(),
-			fmt.Sprintf("coercion to %s not supported", targetKind))
+		return nil, NewParseError(fieldName, value, targetType.String(),
+			fmt.Sprintf("coercion to %s not supported", targetType))
 	}
 }
 
@@ -241,6 +249,62 @@ func coerceToBool(value interface{}, fieldName string) (bool, error) {
 		return false, NewParseError(fieldName, value, "bool",
 			fmt.Sprintf("cannot coerce %T to bool", value))
 	}
+}
+
+// coerceToTime converts various types to time.Time
+func coerceToTime(value interface{}, fieldName string) (time.Time, error) {
+	switch v := value.(type) {
+	case time.Time:
+		return v, nil
+	case string:
+		return parseTimeFromString(v, fieldName)
+	case int64:
+		// Unix timestamp (seconds)
+		return time.Unix(v, 0), nil
+	case float64:
+		// Unix timestamp (seconds, may have fractional part)
+		sec := int64(v)
+		nsec := int64((v - float64(sec)) * 1e9)
+		return time.Unix(sec, nsec), nil
+	case int:
+		// Unix timestamp (seconds)
+		return time.Unix(int64(v), 0), nil
+	default:
+		return time.Time{}, NewParseError(fieldName, value, "time.Time",
+			fmt.Sprintf("cannot coerce %T to time.Time", value))
+	}
+}
+
+// parseTimeFromString attempts to parse time from string using multiple formats
+func parseTimeFromString(s, fieldName string) (time.Time, error) {
+	formats := []string{
+		time.RFC3339,           // "2006-01-02T15:04:05Z07:00"
+		time.RFC3339Nano,       // "2006-01-02T15:04:05.999999999Z07:00"
+		"2006-01-02T15:04:05Z", // ISO 8601 UTC
+		"2006-01-02T15:04:05",  // ISO 8601 without timezone
+		"2006-01-02 15:04:05",  // Common format
+		"2006-01-02",           // Date only
+		"15:04:05",             // Time only (today's date)
+	}
+
+	for _, format := range formats {
+		if t, err := time.Parse(format, s); err == nil {
+			return t, nil
+		}
+	}
+
+	return time.Time{}, NewParseError(fieldName, s, "time.Time",
+		fmt.Sprintf("cannot parse string %q as time.Time using standard formats", s))
+}
+
+// getZeroValueForType returns the zero value for the given type
+func getZeroValueForType(t reflect.Type) interface{} {
+	if t == reflect.TypeOf(time.Time{}) {
+		return time.Time{}
+	}
+
+	// Fall back to kind-based zero values
+	return getZeroValue(t.Kind())
 }
 
 // getZeroValue returns the zero value for the given kind

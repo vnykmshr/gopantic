@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"time"
 )
 
 // ParseInto parses raw JSON into a struct of type T with coercion and validation
@@ -69,16 +70,27 @@ func ParseInto[T any](raw []byte) (T, error) {
 
 // setFieldValue coerces and sets a value on a struct field
 func setFieldValue(fieldValue reflect.Value, rawValue interface{}, fieldName string) error {
-	fieldKind := fieldValue.Kind()
+	fieldType := fieldValue.Type()
+	fieldKind := fieldType.Kind()
 
 	// Handle direct assignment for matching types first
-	if rawValue != nil && reflect.TypeOf(rawValue).AssignableTo(fieldValue.Type()) {
+	if rawValue != nil && reflect.TypeOf(rawValue).AssignableTo(fieldType) {
 		fieldValue.Set(reflect.ValueOf(rawValue))
 		return nil
 	}
 
-	// Use coercion for type conversion
-	coercedValue, err := CoerceValue(rawValue, fieldKind, fieldName)
+	// Handle specific types that need special treatment
+	if fieldType == reflect.TypeOf(time.Time{}) {
+		coercedValue, err := CoerceValue(rawValue, fieldType, fieldName)
+		if err != nil {
+			return err
+		}
+		fieldValue.Set(reflect.ValueOf(coercedValue))
+		return nil
+	}
+
+	// Use coercion for basic type conversion
+	coercedValue, err := CoerceValue(rawValue, fieldType, fieldName)
 	if err != nil {
 		return err
 	}
@@ -96,8 +108,8 @@ func setFieldValue(fieldValue reflect.Value, rawValue interface{}, fieldName str
 	case reflect.Bool:
 		fieldValue.SetBool(coercedValue.(bool))
 	default:
-		return NewParseError(fieldName, rawValue, fieldKind.String(),
-			fmt.Sprintf("unsupported field type: %s", fieldKind))
+		return NewParseError(fieldName, rawValue, fieldType.String(),
+			fmt.Sprintf("unsupported field type: %s", fieldType))
 	}
 
 	return nil
