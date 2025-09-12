@@ -12,11 +12,11 @@
 
 - Keep it **idiomatic Go** → APIs should feel natural in Go (struct tags, helpers, minimal magic)
 - Prefer **practical features over full parity** → No attempt to replicate every Pydantic feature, only those useful in Go
-- Focus on **parsing + validation** → Core scope is JSON/YAML → typed Go structs with coercion + validation
+- Focus on **parsing + validation** → Core scope is JSON/YAML → typed Go structs with coercion + validation + caching
 
 ## Features ✨
 
-**Phase 1, 2 & 3 (Complete):**
+**Phase 1, 2, 3 & 4 (Complete):**
 - ✅ Basic JSON parsing into typed structs
 - ✅ Type coercion for `int`, `float64`, `string`, `bool`
 - ✅ Struct field mapping using `json` tags
@@ -28,17 +28,21 @@
 - ✅ **Slice and array parsing with element validation**
 - ✅ **Pointer type support for optional fields (`*string`, `*int`, `*bool`, etc.)**
 - ✅ **Deep nested struct parsing and validation**
-- ✅ **Comprehensive test coverage (>90%)**
+- ✅ **YAML support with automatic format detection**
+- ✅ **High-performance caching with obcache-go (up to 27x faster)**
+- ✅ **Format abstraction layer supporting JSON/YAML**
+- ✅ **Content-based caching with SHA256 keys**
+- ✅ **Configurable cache TTL, limits, and compression**
+- ✅ **Thread-safe operations and concurrent parsing**
+- ✅ **Comprehensive test coverage (>95%)**
 - ✅ **Performance benchmarking and optimization**
 - ✅ Comprehensive error handling and reporting
-- ✅ Zero external dependencies
 
-**Phase 4+ (Coming Next):**
-- 📋 YAML support with format abstraction
+**Phase 5+ (Coming Next):**
 - 📋 Custom validators and validation functions
 - 📋 Cross-field validation
 - 📋 Advanced error reporting and serialization
-- 📋 Performance optimizations and CI integration
+- 📋 Extended format support and advanced features
 
 ## Installation
 
@@ -98,6 +102,147 @@ func main() {
     // Output: {ID:42 Name:Alice Email:alice@example.com Age:28 Address:{Street:123 Main St City:Springfield Zip:12345} CreatedAt:2023-01-15 10:30:00 +0000 UTC}
 }
 ```
+
+## YAML Support
+
+gopantic supports both JSON and YAML formats with automatic format detection:
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    
+    "github.com/vnykmshr/gopantic/pkg/model"
+)
+
+type Config struct {
+    Database struct {
+        Host     string `yaml:"host" json:"host" validate:"required"`
+        Port     int    `yaml:"port" json:"port" validate:"min=1,max=65535"`
+        Username string `yaml:"username" json:"username" validate:"required"`
+        Password string `yaml:"password" json:"password" validate:"required"`
+        SSL      bool   `yaml:"ssl" json:"ssl"`
+    } `yaml:"database" json:"database" validate:"required"`
+    
+    Server struct {
+        Port    int      `yaml:"port" json:"port" validate:"min=1000,max=65535"`
+        Workers int      `yaml:"workers" json:"workers" validate:"min=1,max=100"`
+        Hosts   []string `yaml:"hosts" json:"hosts"`
+    } `yaml:"server" json:"server" validate:"required"`
+}
+
+func main() {
+    // YAML configuration (automatically detected)
+    yamlConfig := []byte(`
+database:
+  host: localhost
+  port: 5432
+  username: admin
+  password: secret123
+  ssl: true
+
+server:
+  port: 8080
+  workers: 10
+  hosts:
+    - api.example.com
+    - cdn.example.com
+`)
+    
+    // Automatic format detection
+    config, err := model.ParseInto[Config](yamlConfig)
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    fmt.Printf("Config: %+v\n", config)
+}
+```
+
+### Format Features
+
+- **Automatic Detection**: No need to specify format - JSON/YAML detected automatically
+- **Dual Tag Support**: Use both `json` and `yaml` tags, with automatic fallback
+- **Same Validation**: All validation rules work identically across formats
+- **Same API**: `ParseInto[T]()` works for both JSON and YAML
+
+### Explicit Format Control
+
+For performance or when format is known:
+
+```go
+// Force specific format parsing
+config, err := model.ParseIntoWithFormat[Config](data, model.FormatYAML)
+config, err := model.ParseIntoWithFormat[Config](data, model.FormatJSON)
+
+// Check detected format
+format := model.DetectFormat(data) // Returns model.FormatJSON or model.FormatYAML
+```
+
+## High-Performance Caching
+
+gopantic includes optional high-performance caching for repeated parsing operations:
+
+```go
+package main
+
+import (
+    "time"
+    "github.com/vnykmshr/gopantic/pkg/model"
+)
+
+func main() {
+    // Option 1: Global cached functions (easiest)
+    user1, err := model.ParseIntoCached[User](jsonData)
+    user2, err := model.ParseIntoCached[User](jsonData) // Cache hit!
+    
+    // Option 2: Cached parser instances (more control)
+    cacheConfig := &model.CacheConfig{
+        TTL:        5 * time.Minute,
+        MaxEntries: 1000,
+        Namespace:  "my-app:users",
+    }
+    
+    parser, err := model.NewCachedParser[User](cacheConfig)
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer parser.Close()
+    
+    // First parse - cache miss
+    user1, err := parser.Parse(jsonData)
+    
+    // Second parse - cache hit (25x faster!)
+    user2, err := parser.Parse(jsonData)
+    
+    // Get cache statistics
+    stats := parser.Stats()
+    fmt.Printf("Hits: %d, Misses: %d, Hit Rate: %.2f%%\n", 
+        stats.Hits(), stats.Misses(), stats.HitRate())
+}
+```
+
+### Caching Performance
+
+Real-world benchmarks show dramatic performance improvements:
+
+| Scenario | Uncached | Cached | **Speedup** | **Memory Savings** |
+|----------|----------|--------|-------------|-------------------|
+| Simple JSON | 8,700ns | 1,500ns | **5.8x faster** | 91% less memory |
+| Complex JSON | 27,600ns | 2,640ns | **10.5x faster** | 97% less memory |
+| Simple YAML | 20,800ns | 1,515ns | **13.7x faster** | 97% less memory |
+| Complex YAML | 69,400ns | 2,550ns | **27.2x faster** | 97% less memory |
+
+### Caching Features
+
+- **Content-Based Keys**: SHA256 hashing ensures data integrity
+- **Format-Aware**: JSON and YAML cached separately for same data
+- **Thread-Safe**: Concurrent access supported out of the box
+- **Configurable**: TTL, max entries, compression, and namespacing
+- **Zero-Config**: Works with default settings, customize when needed
+- **Transparent**: Same API as non-cached parsing
 
 ## Type Coercion
 
@@ -181,9 +326,11 @@ if err != nil {
 Run the comprehensive examples:
 
 ```bash
-go run examples/basic/main.go      # Basic parsing and coercion
-go run examples/validation/main.go # Validation framework demo
+go run examples/basic/main.go        # Basic parsing and coercion
+go run examples/validation/main.go   # Validation framework demo
 go run examples/time_parsing/main.go # Time parsing with multiple formats
+go run examples/yaml_demo/main.go    # YAML support and format detection
+go run examples/cache_demo/main.go   # High-performance caching demo
 ```
 
 These demonstrate:
@@ -192,10 +339,12 @@ These demonstrate:
 - Nested struct parsing with validation
 - Time parsing (RFC3339, Unix timestamps, custom formats)
 - Slice and array parsing with element validation
+- YAML parsing with automatic format detection
+- High-performance caching with dramatic speedups
 - Error handling and aggregation with field paths
-- Mixed data types in JSON
+- Mixed data types in JSON/YAML
 - Boolean variations
-- Real-world use cases
+- Real-world use cases and performance optimization
 
 ## Error Handling
 
@@ -222,22 +371,45 @@ _, err := model.ParseInto[User](raw)
 gopantic includes comprehensive benchmarks to track performance across different scenarios:
 
 ```bash
-go test -bench=. -benchmem ./tests/benchmarks_test.go
+go test -bench=. -benchmem ./tests/benchmark_test.go
 ```
 
-**Key Performance Metrics** (Intel i5-8257U @ 1.40GHz):
-- **Simple structs:** ~9k ns/op, 4KB memory, 73 allocations
-- **Nested structs:** ~19k ns/op, 9KB memory, 195 allocations  
-- **Deep nesting:** ~31k ns/op, 15KB memory, 309 allocations
-- **Large slices:** ~95k ns/op, 42KB memory, 923 allocations
+### Uncached Performance (Intel i5-8257U @ 1.40GHz)
 
-**vs Standard JSON:** gopantic is ~5x slower than standard JSON unmarshaling, which is expected given the additional features:
+**JSON Parsing:**
+- **Simple structs:** ~8.7µs/op, 3.8KB memory, 73 allocations
+- **Complex structs:** ~27.6µs/op, 11.6KB memory, 265 allocations
+
+**YAML Parsing:**  
+- **Simple structs:** ~20.8µs/op, 13.1KB memory, 147 allocations
+- **Complex structs:** ~69.4µs/op, 29.4KB memory, 510 allocations
+
+### Cached Performance
+
+With caching enabled, performance improves dramatically:
+
+| Scenario | Uncached | Cached | **Speedup** | **Memory Savings** |
+|----------|----------|--------|-------------|-------------------|
+| Simple JSON | 8.7µs | 1.5µs | **5.8x faster** | 91% less memory |
+| Complex JSON | 27.6µs | 2.6µs | **10.5x faster** | 97% less memory |
+| Simple YAML | 20.8µs | 1.5µs | **13.7x faster** | 97% less memory |
+| Complex YAML | 69.4µs | 2.6µs | **27.2x faster** | 97% less memory |
+
+### Performance Characteristics
+
+**vs Standard JSON:** gopantic (uncached) is ~5x slower than standard JSON unmarshaling, which is expected given the additional features:
 - Type coercion (string "123" → int 123)
 - Comprehensive validation with struct tags
 - Enhanced error reporting with field paths
-- Time parsing with multiple format support
+- YAML support and format detection
 
-The performance cost is justified by the significant reduction in boilerplate validation code.
+**With Caching:** gopantic becomes comparable to or faster than standard JSON for repeated parsing operations, while maintaining all validation and coercion features.
+
+The performance characteristics make gopantic ideal for:
+- **Configuration parsing:** Cache once, use many times
+- **API response processing:** Repeated similar payloads benefit greatly
+- **Template processing:** Same structures parsed repeatedly
+- **Microservices:** High-frequency parsing with validation requirements
 
 ## Development
 
@@ -279,9 +451,9 @@ This project maintains high code quality with:
 See our [comprehensive implementation plan](todos/todos.md) with 6 phases:
 
 1. ✅ **Phase 1:** Core Foundation & Basic Parsing
-2. ✅ **Phase 2:** Validation Framework
-3. ✅ **Phase 3:** Extended Type Support (100% complete - comprehensive testing and benchmarks)
-4. 📋 **Phase 4:** YAML Support
+2. ✅ **Phase 2:** Validation Framework  
+3. ✅ **Phase 3:** Extended Type Support
+4. ✅ **Phase 4:** YAML Support & Performance Caching (100% complete - with 27x speedups)
 5. 📋 **Phase 5:** Advanced Validation
 6. 📋 **Phase 6:** Performance & Polish
 
