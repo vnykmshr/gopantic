@@ -473,12 +473,12 @@ func TestParseInto_TimeCoercion_EdgeCases(t *testing.T) {
 
 // Test struct with slices and arrays
 type CollectionStruct struct {
-	IDs      []int       `json:"ids"`
-	Tags     []string    `json:"tags"`
-	Scores   [3]float64  `json:"scores"`
-	Features []bool      `json:"features"`
-	Weights  []float32   `json:"weights"`
-	Names    [2]string   `json:"names"`
+	IDs      []int      `json:"ids"`
+	Tags     []string   `json:"tags"`
+	Scores   [3]float64 `json:"scores"`
+	Features []bool     `json:"features"`
+	Weights  []float32  `json:"weights"`
+	Names    [2]string  `json:"names"`
 }
 
 func TestParseInto_SlicesAndArrays(t *testing.T) {
@@ -643,7 +643,7 @@ func TestParseInto_SliceCoercion_EdgeCases(t *testing.T) {
 			}`),
 			want: SliceTest{
 				Numbers: []int{},
-				Bools: []bool{true, false, true, false, true, false, true, false},
+				Bools:   []bool{true, false, true, false, true, false, true, false},
 				Strings: []string{},
 			},
 			wantErr: false,
@@ -676,9 +676,9 @@ func TestParseInto_SliceCoercion_EdgeCases(t *testing.T) {
 
 func TestParseInto_ArrayCoercion_EdgeCases(t *testing.T) {
 	type ArrayTest struct {
-		Numbers [3]int     `json:"numbers"`
-		Bools   [2]bool    `json:"bools"`
-		Strings [1]string  `json:"strings"`
+		Numbers [3]int    `json:"numbers"`
+		Bools   [2]bool   `json:"bools"`
+		Strings [1]string `json:"strings"`
 	}
 
 	tests := []struct {
@@ -878,7 +878,7 @@ func TestParseInto_NestedStructValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := model.ParseInto[Person](tt.input)
+			_, err := model.ParseInto[Person](tt.input)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ParseInto() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -886,15 +886,12 @@ func TestParseInto_NestedStructValidation(t *testing.T) {
 			if tt.wantErr && err != nil {
 				errorString := err.Error()
 				t.Logf("Error message: %s", errorString)
-				
+
 				for _, expectedField := range tt.errorFields {
 					if !strings.Contains(errorString, expectedField) {
 						t.Errorf("Expected error to contain field path %q, but got: %s", expectedField, errorString)
 					}
 				}
-			}
-			if !tt.wantErr && !reflect.DeepEqual(got, Person{}) {
-				// For error cases, we don't check the actual struct value
 			}
 		})
 	}
@@ -1115,7 +1112,7 @@ func TestParseInto_DeepNestedValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := model.ParseInto[Employee](tt.input)
+			_, err := model.ParseInto[Employee](tt.input)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ParseInto() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -1123,15 +1120,12 @@ func TestParseInto_DeepNestedValidation(t *testing.T) {
 			if tt.wantErr && err != nil {
 				errorString := err.Error()
 				t.Logf("Error message: %s", errorString)
-				
+
 				for _, expectedField := range tt.errorFields {
 					if !strings.Contains(errorString, expectedField) {
 						t.Errorf("Expected error to contain field path %q, but got: %s", expectedField, errorString)
 					}
 				}
-			}
-			if !tt.wantErr && !reflect.DeepEqual(got, Employee{}) {
-				// For error cases, we don't check the actual struct value
 			}
 		})
 	}

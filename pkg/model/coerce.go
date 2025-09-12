@@ -319,17 +319,17 @@ func coerceToSlice(value interface{}, targetType reflect.Type, fieldName string)
 
 	elementType := targetType.Elem()
 	sliceLen := len(sourceSlice)
-	
+
 	// Create new slice with proper type
 	resultSlice := reflect.MakeSlice(targetType, sliceLen, sliceLen)
-	
+
 	// Coerce each element
 	for i, elem := range sourceSlice {
 		coercedElem, err := CoerceValue(elem, elementType, fmt.Sprintf("%s[%d]", fieldName, i))
 		if err != nil {
 			return nil, err
 		}
-		
+
 		// Set the element in the result slice
 		elemValue := reflect.ValueOf(coercedElem)
 		if elemValue.Type().ConvertibleTo(elementType) {
@@ -337,7 +337,7 @@ func coerceToSlice(value interface{}, targetType reflect.Type, fieldName string)
 		}
 		resultSlice.Index(i).Set(elemValue)
 	}
-	
+
 	return resultSlice.Interface(), nil
 }
 
@@ -358,22 +358,22 @@ func coerceToArray(value interface{}, targetType reflect.Type, fieldName string)
 	elementType := targetType.Elem()
 	arrayLen := targetType.Len()
 	sourceLen := len(sourceSlice)
-	
+
 	if sourceLen != arrayLen {
 		return nil, NewParseError(fieldName, value, targetType.String(),
 			fmt.Sprintf("array length mismatch: expected %d, got %d", arrayLen, sourceLen))
 	}
-	
+
 	// Create new array with proper type
 	resultArray := reflect.New(targetType).Elem()
-	
+
 	// Coerce each element
 	for i, elem := range sourceSlice {
 		coercedElem, err := CoerceValue(elem, elementType, fmt.Sprintf("%s[%d]", fieldName, i))
 		if err != nil {
 			return nil, err
 		}
-		
+
 		// Set the element in the result array
 		elemValue := reflect.ValueOf(coercedElem)
 		if elemValue.Type().ConvertibleTo(elementType) {
@@ -381,7 +381,7 @@ func coerceToArray(value interface{}, targetType reflect.Type, fieldName string)
 		}
 		resultArray.Index(i).Set(elemValue)
 	}
-	
+
 	return resultArray.Interface(), nil
 }
 
@@ -457,7 +457,7 @@ func getZeroValueForType(t reflect.Type) interface{} {
 	if t == reflect.TypeOf(time.Time{}) {
 		return time.Time{}
 	}
-	
+
 	// Handle types that need the full type information
 	switch t.Kind() {
 	case reflect.Slice:
@@ -491,7 +491,7 @@ func getZeroValue(kind reflect.Kind) interface{} {
 }
 
 // updateFieldPaths recursively updates field paths in validation errors to include nested paths
-func updateFieldPaths(err error, nestedFieldName, fieldName string) error {
+func updateFieldPaths(err error, nestedFieldName, _ string) error {
 	switch e := err.(type) {
 	case *ValidationError:
 		// Create a copy to avoid modifying the original
@@ -505,7 +505,7 @@ func updateFieldPaths(err error, nestedFieldName, fieldName string) error {
 		// Handle multiple validation errors
 		var updatedErrors ErrorList
 		for _, innerErr := range e {
-			updatedErr := updateFieldPaths(innerErr, nestedFieldName, fieldName)
+			updatedErr := updateFieldPaths(innerErr, nestedFieldName, "")
 			updatedErrors.Add(updatedErr)
 		}
 		return updatedErrors

@@ -295,6 +295,9 @@ func toInt(value interface{}) (int, error) {
 	case int64:
 		return int(v), nil
 	case uint:
+		if v > 9223372036854775807 { // max int64
+			return 0, NewParseError("", value, "int", "value too large for int")
+		}
 		return int(v), nil
 	case uint8:
 		return int(v), nil
@@ -303,6 +306,9 @@ func toInt(value interface{}) (int, error) {
 	case uint32:
 		return int(v), nil
 	case uint64:
+		if v > 9223372036854775807 { // max int64
+			return 0, NewParseError("", value, "int", "value too large for int")
+		}
 		return int(v), nil
 	case float32:
 		return int(v), nil

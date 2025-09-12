@@ -10,6 +10,7 @@ import (
 // RequiredValidator checks that a field has a non-zero value
 type RequiredValidator struct{}
 
+// Name returns the validator name
 func (v *RequiredValidator) Name() string {
 	return "required"
 }
@@ -65,6 +66,7 @@ type MinValidator struct {
 	Min float64
 }
 
+// Name returns the validator name
 func (v *MinValidator) Name() string {
 	return "min"
 }
@@ -114,6 +116,7 @@ type MaxValidator struct {
 	Max float64
 }
 
+// Name returns the validator name
 func (v *MaxValidator) Name() string {
 	return "max"
 }
@@ -161,6 +164,7 @@ func (v *MaxValidator) Validate(fieldName string, value interface{}) error {
 // EmailValidator validates email addresses using a simple but practical regex
 type EmailValidator struct{}
 
+// Name returns the validator name
 func (v *EmailValidator) Name() string {
 	return "email"
 }
@@ -216,7 +220,7 @@ func (v *EmailValidator) Validate(fieldName string, value interface{}) error {
 	localPart, domain := parts[0], parts[1]
 
 	// Local part checks
-	if len(localPart) == 0 || len(localPart) > 64 {
+	if localPart == "" || len(localPart) > 64 {
 		return NewValidationError(fieldName, value, "email", "email local part must be 1-64 characters")
 	}
 
@@ -225,7 +229,7 @@ func (v *EmailValidator) Validate(fieldName string, value interface{}) error {
 	}
 
 	// Domain checks
-	if len(domain) == 0 || len(domain) > 253 {
+	if domain == "" || len(domain) > 253 {
 		return NewValidationError(fieldName, value, "email", "email domain must be 1-253 characters")
 	}
 
@@ -241,10 +245,12 @@ type LengthValidator struct {
 	Length int
 }
 
+// Name returns the validator name
 func (v *LengthValidator) Name() string {
 	return "length"
 }
 
+// Validate checks if the value has the exact required length
 func (v *LengthValidator) Validate(fieldName string, value interface{}) error {
 	if value == nil {
 		return nil // nil values are handled by required validator
@@ -274,12 +280,14 @@ func (v *LengthValidator) Validate(fieldName string, value interface{}) error {
 // AlphaValidator checks that a string contains only alphabetic characters
 type AlphaValidator struct{}
 
+// Name returns the validator name
 func (v *AlphaValidator) Name() string {
 	return "alpha"
 }
 
 var alphaRegex = regexp.MustCompile(`^[a-zA-Z]+$`)
 
+// Validate checks if the value contains only alphabetic characters
 func (v *AlphaValidator) Validate(fieldName string, value interface{}) error {
 	if value == nil {
 		return nil // nil values are handled by required validator
@@ -304,12 +312,14 @@ func (v *AlphaValidator) Validate(fieldName string, value interface{}) error {
 // AlphanumValidator checks that a string contains only alphanumeric characters
 type AlphanumValidator struct{}
 
+// Name returns the validator name
 func (v *AlphanumValidator) Name() string {
 	return "alphanum"
 }
 
 var alphanumRegex = regexp.MustCompile(`^[a-zA-Z0-9]+$`)
 
+// Validate checks if the value contains only alphanumeric characters
 func (v *AlphanumValidator) Validate(fieldName string, value interface{}) error {
 	if value == nil {
 		return nil // nil values are handled by required validator
