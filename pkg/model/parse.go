@@ -1,21 +1,30 @@
 package model
 
 import (
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"time"
 )
 
-// ParseInto parses raw JSON into a struct of type T with coercion and validation
+// ParseInto parses raw data (JSON by default) into a struct of type T with coercion and validation
 func ParseInto[T any](raw []byte) (T, error) {
+	// Auto-detect format and use appropriate parser
+	format := DetectFormat(raw)
+	return ParseIntoWithFormat[T](raw, format)
+}
+
+// ParseIntoWithFormat parses raw data of a specific format into a struct of type T
+func ParseIntoWithFormat[T any](raw []byte, format Format) (T, error) {
 	var zero T
 	var errors ErrorList
 
-	// First, unmarshal into a generic map
-	var data map[string]interface{}
-	if err := json.Unmarshal(raw, &data); err != nil {
-		errors.Add(fmt.Errorf("json parse error: %w", err))
+	// Get the appropriate parser for the format
+	parser := GetParser(format)
+
+	// Parse into a generic map structure
+	data, err := parser.Parse(raw)
+	if err != nil {
+		errors.Add(err)
 		return zero, errors.AsError()
 	}
 
@@ -36,27 +45,27 @@ func ParseInto[T any](raw []byte) (T, error) {
 			continue
 		}
 
-		// Get JSON key from tag, fallback to field name
-		jsonKey := getJSONKey(field)
-		if jsonKey == "-" {
-			continue // Skip fields with json:"-"
+		// Get field key from appropriate tag (json or yaml), fallback to field name
+		fieldKey := getFieldKey(field, format)
+		if fieldKey == "-" {
+			continue // Skip fields with tag:"-"
 		}
 
 		// Get value from data map
-		rawValue, exists := data[jsonKey]
+		rawValue, exists := data[fieldKey]
 		if !exists {
-			// Field not present in JSON, leave as zero value
+			// Field not present in data, leave as zero value
 			rawValue = nil
 		}
 
 		// Coerce and set the value
-		if err := setFieldValue(fieldValue, rawValue, field.Name); err != nil {
+		if err := setFieldValue(fieldValue, rawValue, field.Name, format); err != nil {
 			errors.Add(err)
 			continue // Skip validation if coercion failed
 		}
 
 		// Apply validation rules
-		if err := validateFieldValue(field.Name, jsonKey, fieldValue.Interface(), validation); err != nil {
+		if err := validateFieldValue(field.Name, fieldKey, fieldValue.Interface(), validation); err != nil {
 			errors.Add(err)
 		}
 	}
@@ -69,7 +78,7 @@ func ParseInto[T any](raw []byte) (T, error) {
 }
 
 // setFieldValue coerces and sets a value on a struct field
-func setFieldValue(fieldValue reflect.Value, rawValue interface{}, fieldName string) error {
+func setFieldValue(fieldValue reflect.Value, rawValue interface{}, fieldName string, format Format) error {
 	fieldType := fieldValue.Type()
 	fieldKind := fieldType.Kind()
 
@@ -81,7 +90,7 @@ func setFieldValue(fieldValue reflect.Value, rawValue interface{}, fieldName str
 
 	// Handle specific types that need special treatment
 	if fieldType == reflect.TypeOf(time.Time{}) {
-		coercedValue, err := CoerceValue(rawValue, fieldType, fieldName)
+		coercedValue, err := CoerceValueWithFormat(rawValue, fieldType, fieldName, format)
 		if err != nil {
 			return err
 		}
@@ -90,7 +99,7 @@ func setFieldValue(fieldValue reflect.Value, rawValue interface{}, fieldName str
 	}
 
 	// Use coercion for basic type conversion
-	coercedValue, err := CoerceValue(rawValue, fieldType, fieldName)
+	coercedValue, err := CoerceValueWithFormat(rawValue, fieldType, fieldName, format)
 	if err != nil {
 		return err
 	}
@@ -121,14 +130,32 @@ func setFieldValue(fieldValue reflect.Value, rawValue interface{}, fieldName str
 	return nil
 }
 
-// getJSONKey extracts the JSON key from struct field tags
-func getJSONKey(field reflect.StructField) string {
-	tag := field.Tag.Get("json")
-	if tag == "" {
-		return field.Name
+// getFieldKey extracts the appropriate field key based on the data format
+func getFieldKey(field reflect.StructField, format Format) string {
+	var tagName string
+
+	// Determine which tag to use based on format
+	switch format {
+	case FormatYAML:
+		tagName = "yaml"
+	default:
+		tagName = "json"
 	}
 
-	// Handle json tag options like "name,omitempty"
+	tag := field.Tag.Get(tagName)
+	if tag == "" {
+		// Fallback to json tag if yaml tag is not present
+		if tagName == "yaml" {
+			tag = field.Tag.Get("json")
+		}
+
+		// If still empty, use field name
+		if tag == "" {
+			return field.Name
+		}
+	}
+
+	// Handle tag options like "name,omitempty"
 	if tag == "-" {
 		return "-"
 	}

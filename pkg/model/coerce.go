@@ -7,8 +7,13 @@ import (
 	"time"
 )
 
-// CoerceValue attempts to coerce a value to the target type
+// CoerceValue attempts to coerce a value to the target type (JSON format by default)
 func CoerceValue(value interface{}, targetType reflect.Type, fieldName string) (interface{}, error) {
+	return CoerceValueWithFormat(value, targetType, fieldName, FormatJSON)
+}
+
+// CoerceValueWithFormat attempts to coerce a value to the target type with format awareness
+func CoerceValueWithFormat(value interface{}, targetType reflect.Type, fieldName string, format Format) (interface{}, error) {
 	if value == nil {
 		return getZeroValueForType(targetType), nil
 	}
@@ -36,7 +41,7 @@ func CoerceValue(value interface{}, targetType reflect.Type, fieldName string) (
 	case reflect.Array:
 		return coerceToArray(value, targetType, fieldName)
 	case reflect.Struct:
-		return coerceToStruct(value, targetType, fieldName)
+		return coerceToStructWithFormat(value, targetType, fieldName, format)
 	case reflect.Ptr:
 		return coerceToPointer(value, targetType, fieldName)
 	default:
@@ -387,14 +392,14 @@ func coerceToArray(value interface{}, targetType reflect.Type, fieldName string)
 	return resultArray.Interface(), nil
 }
 
-// coerceToStruct converts JSON objects to Go structs recursively
-func coerceToStruct(value interface{}, targetType reflect.Type, fieldName string) (interface{}, error) {
+// coerceToStructWithFormat converts objects to Go structs recursively with format awareness
+func coerceToStructWithFormat(value interface{}, targetType reflect.Type, fieldName string, format Format) (interface{}, error) {
 	if value == nil {
 		// Return zero value for nil
 		return reflect.Zero(targetType).Interface(), nil
 	}
 
-	// Handle JSON objects (map[string]interface{})
+	// Handle data objects (map[string]interface{})
 	sourceMap, ok := value.(map[string]interface{})
 	if !ok {
 		return nil, NewParseError(fieldName, value, targetType.String(),
@@ -418,29 +423,29 @@ func coerceToStruct(value interface{}, targetType reflect.Type, fieldName string
 			continue
 		}
 
-		// Get JSON key from tag, fallback to field name
-		jsonKey := getJSONKey(field)
-		if jsonKey == "-" {
-			continue // Skip fields with json:"-"
+		// Get field key from appropriate tag (json or yaml), fallback to field name
+		fieldKey := getFieldKey(field, format)
+		if fieldKey == "-" {
+			continue // Skip fields with tag:"-"
 		}
 
 		// Get value from data map
-		rawValue, exists := sourceMap[jsonKey]
+		rawValue, exists := sourceMap[fieldKey]
 		nestedFieldName := fmt.Sprintf("%s.%s", fieldName, field.Name)
 
 		if !exists {
-			// Field not present in JSON, leave as zero value
+			// Field not present in data, leave as zero value
 			rawValue = nil
 		}
 
 		// Recursively coerce and set the value
-		if err := setFieldValue(fieldValue, rawValue, nestedFieldName); err != nil {
+		if err := setFieldValue(fieldValue, rawValue, nestedFieldName, format); err != nil {
 			errors.Add(err)
 			continue // Skip validation if coercion failed
 		}
 
 		// Apply validation rules to nested fields
-		if err := validateFieldValue(field.Name, jsonKey, fieldValue.Interface(), validation); err != nil {
+		if err := validateFieldValue(field.Name, fieldKey, fieldValue.Interface(), validation); err != nil {
 			// Update error to include nested path
 			updatedErr := updateFieldPaths(err, nestedFieldName, field.Name)
 			errors.Add(updatedErr)
