@@ -50,6 +50,11 @@ func (v *RequiredValidator) Validate(fieldName string, value interface{}) error 
 		if val.IsNil() {
 			return NewValidationError(fieldName, value, "required", "field is required")
 		}
+	case reflect.Struct:
+		// Check if struct is a zero value (all fields are zero)
+		if val.IsZero() {
+			return NewValidationError(fieldName, value, "required", "field is required")
+		}
 	}
 
 	return nil

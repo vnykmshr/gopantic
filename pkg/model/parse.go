@@ -109,6 +109,8 @@ func setFieldValue(fieldValue reflect.Value, rawValue interface{}, fieldName str
 		fieldValue.SetBool(coercedValue.(bool))
 	case reflect.Slice, reflect.Array:
 		fieldValue.Set(reflect.ValueOf(coercedValue))
+	case reflect.Struct:
+		fieldValue.Set(reflect.ValueOf(coercedValue))
 	default:
 		return NewParseError(fieldName, rawValue, fieldType.String(),
 			fmt.Sprintf("unsupported field type: %s", fieldType))

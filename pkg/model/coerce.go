@@ -35,6 +35,8 @@ func CoerceValue(value interface{}, targetType reflect.Type, fieldName string) (
 		return coerceToSlice(value, targetType, fieldName)
 	case reflect.Array:
 		return coerceToArray(value, targetType, fieldName)
+	case reflect.Struct:
+		return coerceToStruct(value, targetType, fieldName)
 	default:
 		return nil, NewParseError(fieldName, value, targetType.String(),
 			fmt.Sprintf("coercion to %s not supported", targetType))
@@ -383,6 +385,73 @@ func coerceToArray(value interface{}, targetType reflect.Type, fieldName string)
 	return resultArray.Interface(), nil
 }
 
+// coerceToStruct converts JSON objects to Go structs recursively
+func coerceToStruct(value interface{}, targetType reflect.Type, fieldName string) (interface{}, error) {
+	if value == nil {
+		// Return zero value for nil
+		return reflect.Zero(targetType).Interface(), nil
+	}
+
+	// Handle JSON objects (map[string]interface{})
+	sourceMap, ok := value.(map[string]interface{})
+	if !ok {
+		return nil, NewParseError(fieldName, value, targetType.String(),
+			fmt.Sprintf("cannot coerce %T to struct", value))
+	}
+
+	// Create new instance of the target struct
+	resultValue := reflect.New(targetType).Elem()
+
+	// Parse validation rules for this struct type
+	validation := ParseValidationTags(targetType)
+	var errors ErrorList
+
+	// Process each field in the nested struct
+	for i := 0; i < targetType.NumField(); i++ {
+		field := targetType.Field(i)
+		fieldValue := resultValue.Field(i)
+
+		// Skip unexported fields
+		if !fieldValue.CanSet() {
+			continue
+		}
+
+		// Get JSON key from tag, fallback to field name
+		jsonKey := getJSONKey(field)
+		if jsonKey == "-" {
+			continue // Skip fields with json:"-"
+		}
+
+		// Get value from data map
+		rawValue, exists := sourceMap[jsonKey]
+		nestedFieldName := fmt.Sprintf("%s.%s", fieldName, field.Name)
+
+		if !exists {
+			// Field not present in JSON, leave as zero value
+			rawValue = nil
+		}
+
+		// Recursively coerce and set the value
+		if err := setFieldValue(fieldValue, rawValue, nestedFieldName); err != nil {
+			errors.Add(err)
+			continue // Skip validation if coercion failed
+		}
+
+		// Apply validation rules to nested fields
+		if err := validateFieldValue(field.Name, jsonKey, fieldValue.Interface(), validation); err != nil {
+			// Update error to include nested path
+			updatedErr := updateFieldPaths(err, nestedFieldName, field.Name)
+			errors.Add(updatedErr)
+		}
+	}
+
+	if errors.HasErrors() {
+		return nil, errors.AsError()
+	}
+
+	return resultValue.Interface(), nil
+}
+
 // getZeroValueForType returns the zero value for the given type
 func getZeroValueForType(t reflect.Type) interface{} {
 	if t == reflect.TypeOf(time.Time{}) {
@@ -394,6 +463,8 @@ func getZeroValueForType(t reflect.Type) interface{} {
 	case reflect.Slice:
 		return reflect.MakeSlice(t, 0, 0).Interface()
 	case reflect.Array:
+		return reflect.Zero(t).Interface()
+	case reflect.Struct:
 		return reflect.Zero(t).Interface()
 	default:
 		// Fall back to kind-based zero values
@@ -416,5 +487,38 @@ func getZeroValue(kind reflect.Kind) interface{} {
 		return false
 	default:
 		return nil
+	}
+}
+
+// updateFieldPaths recursively updates field paths in validation errors to include nested paths
+func updateFieldPaths(err error, nestedFieldName, fieldName string) error {
+	switch e := err.(type) {
+	case *ValidationError:
+		// Create a copy to avoid modifying the original
+		return &ValidationError{
+			Field:   nestedFieldName,
+			Value:   e.Value,
+			Rule:    e.Rule,
+			Message: e.Message,
+		}
+	case ErrorList:
+		// Handle multiple validation errors
+		var updatedErrors ErrorList
+		for _, innerErr := range e {
+			updatedErr := updateFieldPaths(innerErr, nestedFieldName, fieldName)
+			updatedErrors.Add(updatedErr)
+		}
+		return updatedErrors
+	case *ParseError:
+		// Update parse errors as well
+		return &ParseError{
+			Field:   nestedFieldName,
+			Value:   e.Value,
+			Type:    e.Type,
+			Message: e.Message,
+		}
+	default:
+		// For other error types, return as-is
+		return err
 	}
 }
