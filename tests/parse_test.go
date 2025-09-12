@@ -469,3 +469,264 @@ func TestParseInto_TimeCoercion_EdgeCases(t *testing.T) {
 		})
 	}
 }
+
+// Test struct with slices and arrays
+type CollectionStruct struct {
+	IDs      []int       `json:"ids"`
+	Tags     []string    `json:"tags"`
+	Scores   [3]float64  `json:"scores"`
+	Features []bool      `json:"features"`
+	Weights  []float32   `json:"weights"`
+	Names    [2]string   `json:"names"`
+}
+
+func TestParseInto_SlicesAndArrays(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   []byte
+		want    CollectionStruct
+		wantErr bool
+	}{
+		{
+			name: "valid arrays and slices",
+			input: []byte(`{
+				"ids": [1, 2, 3],
+				"tags": ["go", "json", "validation"],
+				"scores": [85.5, 92.0, 78.5],
+				"features": [true, false, true],
+				"weights": [1.2, 3.4, 5.6],
+				"names": ["Alice", "Bob"]
+			}`),
+			want: CollectionStruct{
+				IDs:      []int{1, 2, 3},
+				Tags:     []string{"go", "json", "validation"},
+				Scores:   [3]float64{85.5, 92.0, 78.5},
+				Features: []bool{true, false, true},
+				Weights:  []float32{1.2, 3.4, 5.6},
+				Names:    [2]string{"Alice", "Bob"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "coercion from strings to numbers",
+			input: []byte(`{
+				"ids": ["1", "2", "3"],
+				"tags": ["go"],
+				"scores": ["85.5", "92.0", "78.5"],
+				"features": ["true", "false", "true"],
+				"weights": ["1.2", "3.4"],
+				"names": ["Alice", "Bob"]
+			}`),
+			want: CollectionStruct{
+				IDs:      []int{1, 2, 3},
+				Tags:     []string{"go"},
+				Scores:   [3]float64{85.5, 92.0, 78.5},
+				Features: []bool{true, false, true},
+				Weights:  []float32{1.2, 3.4},
+				Names:    [2]string{"Alice", "Bob"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "empty arrays and slices",
+			input: []byte(`{
+				"ids": [],
+				"tags": [],
+				"scores": [0.0, 0.0, 0.0],
+				"features": [],
+				"weights": [],
+				"names": ["", ""]
+			}`),
+			want: CollectionStruct{
+				IDs:      []int{},
+				Tags:     []string{},
+				Scores:   [3]float64{0.0, 0.0, 0.0},
+				Features: []bool{},
+				Weights:  []float32{},
+				Names:    [2]string{"", ""},
+			},
+			wantErr: false,
+		},
+		{
+			name: "null slices (should become empty)",
+			input: []byte(`{
+				"ids": null,
+				"tags": null,
+				"scores": [1.0, 2.0, 3.0],
+				"features": null,
+				"weights": null,
+				"names": ["Test", "User"]
+			}`),
+			want: CollectionStruct{
+				IDs:      []int{},
+				Tags:     []string{},
+				Scores:   [3]float64{1.0, 2.0, 3.0},
+				Features: []bool{},
+				Weights:  []float32{},
+				Names:    [2]string{"Test", "User"},
+			},
+			wantErr: false,
+		},
+		{
+			name:    "array length mismatch",
+			input:   []byte(`{"scores": [85.5, 92.0]}`), // Only 2 elements for [3]float64
+			wantErr: true,
+		},
+		{
+			name:    "array too many elements",
+			input:   []byte(`{"scores": [85.5, 92.0, 78.5, 99.0]}`), // 4 elements for [3]float64
+			wantErr: true,
+		},
+		{
+			name:    "invalid element coercion in slice",
+			input:   []byte(`{"ids": [1, "invalid", 3]}`),
+			wantErr: true,
+		},
+		{
+			name:    "invalid element coercion in array",
+			input:   []byte(`{"scores": [85.5, "invalid", 78.5]}`),
+			wantErr: true,
+		},
+		{
+			name:    "wrong array length for names",
+			input:   []byte(`{"names": ["Alice"]}`), // Only 1 element for [2]string
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := model.ParseInto[CollectionStruct](tt.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ParseInto() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !tt.wantErr && !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ParseInto() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestParseInto_SliceCoercion_EdgeCases(t *testing.T) {
+	type SliceTest struct {
+		Numbers []int    `json:"numbers"`
+		Bools   []bool   `json:"bools"`
+		Strings []string `json:"strings"`
+	}
+
+	tests := []struct {
+		name    string
+		input   []byte
+		want    SliceTest
+		wantErr bool
+	}{
+		{
+			name: "mixed number coercion",
+			input: []byte(`{
+				"numbers": [1, "2", 3.0, "4"],
+				"bools": [true, "false", 1, "0"],
+				"strings": [123, true, 45.67]
+			}`),
+			want: SliceTest{
+				Numbers: []int{1, 2, 3, 4},
+				Bools:   []bool{true, false, true, false},
+				Strings: []string{"123", "true", "45.67"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "boolean coercion variations",
+			input: []byte(`{
+				"bools": ["true", "false", "1", "0", "yes", "no", "on", "off"]
+			}`),
+			want: SliceTest{
+				Numbers: []int{},
+				Bools: []bool{true, false, true, false, true, false, true, false},
+				Strings: []string{},
+			},
+			wantErr: false,
+		},
+		{
+			name:    "invalid boolean in slice",
+			input:   []byte(`{"bools": ["true", "maybe", "false"]}`),
+			wantErr: true,
+		},
+		{
+			name:    "non-array value for slice",
+			input:   []byte(`{"numbers": "not an array"}`),
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := model.ParseInto[SliceTest](tt.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ParseInto() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !tt.wantErr && !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ParseInto() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestParseInto_ArrayCoercion_EdgeCases(t *testing.T) {
+	type ArrayTest struct {
+		Numbers [3]int     `json:"numbers"`
+		Bools   [2]bool    `json:"bools"`
+		Strings [1]string  `json:"strings"`
+	}
+
+	tests := []struct {
+		name    string
+		input   []byte
+		want    ArrayTest
+		wantErr bool
+	}{
+		{
+			name: "exact length arrays with coercion",
+			input: []byte(`{
+				"numbers": ["1", "2", "3"],
+				"bools": [1, 0],
+				"strings": [42]
+			}`),
+			want: ArrayTest{
+				Numbers: [3]int{1, 2, 3},
+				Bools:   [2]bool{true, false},
+				Strings: [1]string{"42"},
+			},
+			wantErr: false,
+		},
+		{
+			name:    "array too short",
+			input:   []byte(`{"numbers": [1, 2]}`), // Missing 1 element
+			wantErr: true,
+		},
+		{
+			name:    "array too long",
+			input:   []byte(`{"numbers": [1, 2, 3, 4]}`), // 1 extra element
+			wantErr: true,
+		},
+		{
+			name:    "empty array when expecting elements",
+			input:   []byte(`{"numbers": []}`),
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := model.ParseInto[ArrayTest](tt.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ParseInto() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !tt.wantErr && !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ParseInto() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

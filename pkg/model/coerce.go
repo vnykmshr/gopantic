@@ -31,6 +31,10 @@ func CoerceValue(value interface{}, targetType reflect.Type, fieldName string) (
 		return coerceToFloat(value, targetKind, fieldName)
 	case reflect.Bool:
 		return coerceToBool(value, fieldName)
+	case reflect.Slice:
+		return coerceToSlice(value, targetType, fieldName)
+	case reflect.Array:
+		return coerceToArray(value, targetType, fieldName)
 	default:
 		return nil, NewParseError(fieldName, value, targetType.String(),
 			fmt.Sprintf("coercion to %s not supported", targetType))
@@ -297,14 +301,104 @@ func parseTimeFromString(s, fieldName string) (time.Time, error) {
 		fmt.Sprintf("cannot parse string %q as time.Time using standard formats", s))
 }
 
+// coerceToSlice converts JSON arrays to Go slices with element coercion
+func coerceToSlice(value interface{}, targetType reflect.Type, fieldName string) (interface{}, error) {
+	if value == nil {
+		// Return zero slice for nil
+		return reflect.Zero(targetType).Interface(), nil
+	}
+
+	// Handle JSON arrays ([]interface{})
+	sourceSlice, ok := value.([]interface{})
+	if !ok {
+		return nil, NewParseError(fieldName, value, targetType.String(),
+			fmt.Sprintf("cannot coerce %T to slice", value))
+	}
+
+	elementType := targetType.Elem()
+	sliceLen := len(sourceSlice)
+	
+	// Create new slice with proper type
+	resultSlice := reflect.MakeSlice(targetType, sliceLen, sliceLen)
+	
+	// Coerce each element
+	for i, elem := range sourceSlice {
+		coercedElem, err := CoerceValue(elem, elementType, fmt.Sprintf("%s[%d]", fieldName, i))
+		if err != nil {
+			return nil, err
+		}
+		
+		// Set the element in the result slice
+		elemValue := reflect.ValueOf(coercedElem)
+		if elemValue.Type().ConvertibleTo(elementType) {
+			elemValue = elemValue.Convert(elementType)
+		}
+		resultSlice.Index(i).Set(elemValue)
+	}
+	
+	return resultSlice.Interface(), nil
+}
+
+// coerceToArray converts JSON arrays to Go arrays with element coercion
+func coerceToArray(value interface{}, targetType reflect.Type, fieldName string) (interface{}, error) {
+	if value == nil {
+		// Return zero array for nil
+		return reflect.Zero(targetType).Interface(), nil
+	}
+
+	// Handle JSON arrays ([]interface{})
+	sourceSlice, ok := value.([]interface{})
+	if !ok {
+		return nil, NewParseError(fieldName, value, targetType.String(),
+			fmt.Sprintf("cannot coerce %T to array", value))
+	}
+
+	elementType := targetType.Elem()
+	arrayLen := targetType.Len()
+	sourceLen := len(sourceSlice)
+	
+	if sourceLen != arrayLen {
+		return nil, NewParseError(fieldName, value, targetType.String(),
+			fmt.Sprintf("array length mismatch: expected %d, got %d", arrayLen, sourceLen))
+	}
+	
+	// Create new array with proper type
+	resultArray := reflect.New(targetType).Elem()
+	
+	// Coerce each element
+	for i, elem := range sourceSlice {
+		coercedElem, err := CoerceValue(elem, elementType, fmt.Sprintf("%s[%d]", fieldName, i))
+		if err != nil {
+			return nil, err
+		}
+		
+		// Set the element in the result array
+		elemValue := reflect.ValueOf(coercedElem)
+		if elemValue.Type().ConvertibleTo(elementType) {
+			elemValue = elemValue.Convert(elementType)
+		}
+		resultArray.Index(i).Set(elemValue)
+	}
+	
+	return resultArray.Interface(), nil
+}
+
 // getZeroValueForType returns the zero value for the given type
 func getZeroValueForType(t reflect.Type) interface{} {
 	if t == reflect.TypeOf(time.Time{}) {
 		return time.Time{}
 	}
-
-	// Fall back to kind-based zero values
-	return getZeroValue(t.Kind())
+	
+	// Handle types that need the full type information
+	switch t.Kind() {
+	case reflect.Slice:
+		return reflect.MakeSlice(t, 0, 0).Interface()
+	case reflect.Array:
+		return reflect.Zero(t).Interface()
+	default:
+		// Fall back to kind-based zero values
+		return getZeroValue(t.Kind())
+	}
 }
 
 // getZeroValue returns the zero value for the given kind
