@@ -1,26 +1,53 @@
-# Binaries for programs and plugins
+# Go-specific
+## Binaries
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
 
-# Test binary, built with `go test -c`
+## Test binaries
 *.test
 
-# Output of the go coverage tool, specifically when used with LiteIDE
-*.out
-
-# Dependency directories (remove the comment below to include it)
-# vendor/
-
-# Go workspace file
+## Go workspace file
 go.work
 
-# Build artifacts
+## Dependency directories
+# vendor/
+
+# Build and distribution
 /bin/
-/dist/
 /build/
+/dist/
+
+# Testing and coverage
+*.out
+*.cover
+*.coverage
+coverage/
+coverage.html
+
+# Profiling
+*.prof
+*.pprof
+
+# Logs
+*.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Backup files
+*.bak
+*.backup
 
 # IDE and editor files
 .vscode/
@@ -30,53 +57,30 @@ go.work
 *~
 
 # OS generated files
+## macOS
 .DS_Store
 .DS_Store?
 ._*
 .Spotlight-V100
 .Trashes
+
+## Windows
 ehthumbs.db
 Thumbs.db
 
-# Logs
-*.log
-
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
-
-# Coverage directory used by tools like istanbul
-coverage/
-*.cover
-*.coverage
-
-# Temporary files
-tmp/
-temp/
-
-# Project-specific ignores
-# Todo/task management files (private workflow)
-todos/
-TODO.md
-NOTES.md
-
-# Local environment files
+# Environment and configuration
 .env
 .env.local
 .env.*.local
 
-# Backup files
-*.bak
-*.backup
-
-# Security
+# Security files
 *.pem
 *.key
 *.crt
 *.p12
 
-# Profiling
-*.prof
-*.pprof
+# Project-specific
+## Todo/task management (private workflow)
+todos/
+TODO.md
+NOTES.md
