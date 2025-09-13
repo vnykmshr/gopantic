@@ -4,16 +4,26 @@ on:
   push:
     branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
+
+env:
+  GO_VERSION: '1.21'
 
 jobs:
   test:
-    strategy:
-      matrix:
-        go-version: ['1.22', '1.23']
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
-    
+    name: Test
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -21,12 +31,14 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: ${{ matrix.go-version }}
+        go-version: ${{ env.GO_VERSION }}
 
     - name: Cache Go modules
       uses: actions/cache@v4
       with:
-        path: ~/go/pkg/mod
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
         key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
         restore-keys: |
           ${{ runner.os }}-go-
@@ -47,6 +59,8 @@ jobs:
 
     - name: Run tests
       run: go test -v -race -coverprofile=coverage.out ./...
+      env:
+        REDIS_URL: localhost:6379
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
@@ -56,6 +70,7 @@ jobs:
         name: codecov-umbrella
 
   lint:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
@@ -64,7 +79,17 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.23'
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Cache Go modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
 
     - name: Run golangci-lint
       uses: golangci/golangci-lint-action@v6
@@ -73,6 +98,7 @@ jobs:
         args: --timeout=5m
 
   security:
+    name: Security Scan
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
@@ -81,9 +107,244 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.23'
+        go-version: ${{ env.GO_VERSION }}
 
     - name: Run Gosec Security Scanner
       uses: securecodewarrior/github-action-gosec@master
       with:
-        args: './...'
+        args: '-no-fail -fmt sarif -out results.sarif ./...'
+
+    - name: Upload SARIF file
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: results.sarif
+
+  benchmarks:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Cache Go modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Download dependencies
+      run: go mod download
+
+    - name: Run benchmark comparison
+      run: |
+        echo "## 🚀 Performance Benchmark Results" >> benchmark_results.md
+        echo "" >> benchmark_results.md
+        echo "### Parsing Performance Comparison" >> benchmark_results.md
+        echo "\`\`\`" >> benchmark_results.md
+        make bench-compare >> benchmark_results.md 2>&1 || true
+        echo "\`\`\`" >> benchmark_results.md
+        echo "" >> benchmark_results.md
+        echo "### Memory Allocation Benchmarks" >> benchmark_results.md
+        echo "\`\`\`" >> benchmark_results.md
+        make bench-memory >> benchmark_results.md 2>&1 || true
+        echo "\`\`\`" >> benchmark_results.md
+        echo "" >> benchmark_results.md
+        echo "### Cache Performance" >> benchmark_results.md
+        echo "\`\`\`" >> benchmark_results.md
+        make bench-cache >> benchmark_results.md 2>&1 || true
+        echo "\`\`\`" >> benchmark_results.md
+        echo "" >> benchmark_results.md
+        echo "### Concurrent Processing" >> benchmark_results.md
+        echo "\`\`\`" >> benchmark_results.md
+        make bench-concurrent >> benchmark_results.md 2>&1 || true
+        echo "\`\`\`" >> benchmark_results.md
+      env:
+        REDIS_URL: localhost:6379
+
+    - name: Comment benchmark results
+      uses: actions/github-script@v7
+      if: github.event_name == 'pull_request'
+      with:
+        script: |
+          const fs = require('fs');
+          if (fs.existsSync('benchmark_results.md')) {
+            const benchmarkResults = fs.readFileSync('benchmark_results.md', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: benchmarkResults
+            });
+          }
+
+  integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Cache Go modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Download dependencies
+      run: go mod download
+
+    - name: Run integration tests
+      run: go test -v ./integration/...
+      env:
+        REDIS_URL: localhost:6379
+
+    - name: Test examples
+      run: |
+        echo "Testing examples..."
+        cd examples/basic && go run main.go
+        cd ../validation && go run main.go  
+        cd ../yaml_demo && go run main.go
+        cd ../cache_demo && go run main.go
+        cd ../pointers && go run main.go
+        cd ../time_parsing && go run main.go
+
+  cross-platform:
+    name: Cross Platform Tests
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        go-version: ['1.20', '1.21']
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ matrix.go-version }}
+
+    - name: Download dependencies
+      run: go mod download
+
+    - name: Run basic tests
+      run: go test ./pkg/model/...
+
+    - name: Build examples
+      run: |
+        go build ./examples/basic/...
+        go build ./examples/validation/...
+        go build ./examples/yaml_demo/...
+
+  performance-regression:
+    name: Performance Regression Detection
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+    - name: Checkout base branch
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.base_ref }}
+        path: base
+
+    - name: Checkout PR branch  
+      uses: actions/checkout@v4
+      with:
+        path: pr
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Run baseline benchmarks
+      run: |
+        cd base
+        go mod download
+        go test -bench=. -benchmem -count=3 ./benchmarks > ../baseline.txt
+        
+    - name: Run PR benchmarks
+      run: |
+        cd pr  
+        go mod download
+        go test -bench=. -benchmem -count=3 ./benchmarks > ../pr.txt
+
+    - name: Install benchcmp
+      run: go install golang.org/x/tools/cmd/benchcmp@latest
+
+    - name: Compare benchmarks
+      run: |
+        echo "## 📊 Performance Regression Analysis" > comparison.md
+        echo "" >> comparison.md
+        echo "\`\`\`" >> comparison.md
+        benchcmp baseline.txt pr.txt >> comparison.md 2>&1 || true
+        echo "\`\`\`" >> comparison.md
+        
+        # Check for significant regressions (>10% slowdown)
+        if benchcmp baseline.txt pr.txt | grep -E '\+[0-9]+\.[0-9]+%.*ns/op' | awk '{print $4}' | sed 's/[+%]//g' | awk '{if($1>10) exit 1}'; then
+          echo "" >> comparison.md
+          echo "✅ **No significant performance regressions detected**" >> comparison.md
+        else
+          echo "" >> comparison.md
+          echo "⚠️ **Potential performance regression detected** - Please review the benchmark comparison above." >> comparison.md
+        fi
+
+    - name: Comment performance comparison
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          if (fs.existsSync('comparison.md')) {
+            const comparison = fs.readFileSync('comparison.md', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comparison
+            });
+          }

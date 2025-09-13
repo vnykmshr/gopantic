@@ -3,6 +3,8 @@ module github.com/vnykmshr/gopantic
 go 1.25.1
 
 require (
+	github.com/redis/go-redis/v9 v9.12.1
+	github.com/vnykmshr/goflow v1.0.0
 	github.com/vnykmshr/obcache-go v1.0.2
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -17,7 +19,6 @@ require (
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.65.0 // indirect
 	github.com/prometheus/procfs v0.16.1 // indirect
-	github.com/redis/go-redis/v9 v9.12.1 // indirect
 	go.opentelemetry.io/otel v1.37.0 // indirect
 	go.opentelemetry.io/otel/metric v1.37.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
