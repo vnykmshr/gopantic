@@ -6,14 +6,37 @@ import (
 	"time"
 )
 
-// ParseInto parses raw data (JSON by default) into a struct of type T with coercion and validation
+// ParseInto parses raw data into a struct of type T with automatic format detection, type coercion, and validation.
+// The format is automatically detected (JSON or YAML) based on the content structure.
+// This is the main entry point for parsing operations in gopantic.
+//
+// Example:
+//
+//	type User struct {
+//	    ID   int    `json:"id" validate:"required,min=1"`
+//	    Name string `json:"name" validate:"required,min=2"`
+//	}
+//
+//	user, err := model.ParseInto[User](jsonData)
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
 func ParseInto[T any](raw []byte) (T, error) {
 	// Auto-detect format and use appropriate parser
 	format := DetectFormat(raw)
 	return ParseIntoWithFormat[T](raw, format)
 }
 
-// ParseIntoWithFormat parses raw data of a specific format into a struct of type T
+// ParseIntoWithFormat parses raw data of a specific format into a struct of type T with type coercion and validation.
+// Use this when you know the exact format or want to enforce a specific format.
+// Supports JSON and YAML formats.
+//
+// Example:
+//
+//	user, err := model.ParseIntoWithFormat[User](yamlData, model.FormatYAML)
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
 func ParseIntoWithFormat[T any](raw []byte, format Format) (T, error) {
 	var zero T
 	var errors ErrorList

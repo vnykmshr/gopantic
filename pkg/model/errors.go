@@ -9,7 +9,8 @@ import (
 	"strings"
 )
 
-// ParseError represents an error that occurred during parsing
+// ParseError represents an error that occurred during data parsing.
+// Contains detailed information about the field, value, and target type that caused the error.
 type ParseError struct {
 	Field   string
 	Value   interface{}
@@ -24,7 +25,8 @@ func (e ParseError) Error() string {
 	return fmt.Sprintf("parse error: %s", e.Message)
 }
 
-// NewParseError creates a new ParseError
+// NewParseError creates a new ParseError with detailed context information.
+// Use this to create meaningful error messages for parsing failures.
 func NewParseError(field string, value interface{}, targetType, message string) *ParseError {
 	return &ParseError{
 		Field:   field,
@@ -34,7 +36,8 @@ func NewParseError(field string, value interface{}, targetType, message string) 
 	}
 }
 
-// ValidationError represents a validation failure
+// ValidationError represents a validation failure with detailed field and rule information.
+// Supports nested field paths and structured error details for comprehensive error reporting.
 type ValidationError struct {
 	Field     string
 	FieldPath string // Full field path for nested structures (e.g., "User.Address.Street")
@@ -56,7 +59,8 @@ func (e ValidationError) Error() string {
 	return fmt.Sprintf("validation error: %s", e.Message)
 }
 
-// NewValidationError creates a new ValidationError
+// NewValidationError creates a new ValidationError with basic field and rule information.
+// This is the most commonly used constructor for validation errors.
 func NewValidationError(field string, value interface{}, rule, message string) *ValidationError {
 	return &ValidationError{
 		Field:     field,
@@ -68,7 +72,8 @@ func NewValidationError(field string, value interface{}, rule, message string) *
 	}
 }
 
-// NewValidationErrorWithPath creates a new ValidationError with explicit field path
+// NewValidationErrorWithPath creates a new ValidationError with explicit field path for nested structures.
+// Use this when validating nested structs to provide clear error paths like "User.Address.Street".
 func NewValidationErrorWithPath(field, fieldPath string, value interface{}, rule, message string) *ValidationError {
 	return &ValidationError{
 		Field:     field,
@@ -80,7 +85,8 @@ func NewValidationErrorWithPath(field, fieldPath string, value interface{}, rule
 	}
 }
 
-// NewValidationErrorWithDetails creates a new ValidationError with additional structured details
+// NewValidationErrorWithDetails creates a new ValidationError with additional structured details.
+// The details map can contain additional context information for advanced error reporting scenarios.
 func NewValidationErrorWithDetails(field, fieldPath string, value interface{}, rule, message string, details map[string]interface{}) *ValidationError {
 	if details == nil {
 		details = make(map[string]interface{})
@@ -96,7 +102,8 @@ func NewValidationErrorWithDetails(field, fieldPath string, value interface{}, r
 	}
 }
 
-// ErrorList represents a collection of errors that can occur during parsing/validation
+// ErrorList represents a collection of errors that can occur during parsing/validation.
+// Provides aggregation, JSON serialization, and structured error reporting capabilities.
 type ErrorList []error
 
 func (el ErrorList) Error() string {
@@ -166,13 +173,15 @@ func (el ErrorList) GroupByField() map[string][]*ValidationError {
 	return groups
 }
 
-// StructuredErrorReport represents a structured validation error report for JSON serialization
+// StructuredErrorReport represents a structured validation error report for JSON serialization.
+// Provides a comprehensive, machine-readable format for validation errors suitable for APIs.
 type StructuredErrorReport struct {
 	Errors []FieldError `json:"errors"`
 	Count  int          `json:"count"`
 }
 
-// FieldError represents a single field's validation errors
+// FieldError represents a single field's validation errors.
+// Groups all validation errors for a specific field with detailed context information.
 type FieldError struct {
 	Field     string                `json:"field"`
 	FieldPath string                `json:"field_path"`
@@ -180,7 +189,8 @@ type FieldError struct {
 	Errors    []ValidationErrorInfo `json:"validation_errors"`
 }
 
-// ValidationErrorInfo represents detailed information about a validation error
+// ValidationErrorInfo represents detailed information about a validation error.
+// Contains the rule name, message, and optional additional details for comprehensive error reporting.
 type ValidationErrorInfo struct {
 	Rule    string                 `json:"rule"`
 	Message string                 `json:"message"`

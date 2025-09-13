@@ -5,12 +5,16 @@ import (
 	"sync"
 )
 
-// ObjectPool manages reusable objects to reduce memory allocations
+// ObjectPool manages reusable objects to reduce memory allocations.
+// This generic pool can be used for any type T and automatically handles
+// object creation, reset, and reuse for improved performance.
 type ObjectPool[T any] struct {
 	pool sync.Pool
 }
 
-// NewObjectPool creates a new object pool for type T
+// NewObjectPool creates a new object pool for type T.
+// The pool automatically creates new instances of T when needed and
+// reuses existing instances to reduce garbage collection pressure.
 func NewObjectPool[T any]() *ObjectPool[T] {
 	return &ObjectPool[T]{
 		pool: sync.Pool{
@@ -22,12 +26,16 @@ func NewObjectPool[T any]() *ObjectPool[T] {
 	}
 }
 
-// Get retrieves an object from the pool
+// Get retrieves an object from the pool.
+// If no objects are available, a new one is created automatically.
+// The returned object should be returned to the pool using Put() when done.
 func (p *ObjectPool[T]) Get() *T {
 	return p.pool.Get().(*T)
 }
 
-// Put returns an object to the pool
+// Put returns an object to the pool after resetting it to zero value.
+// This ensures that pooled objects are clean and ready for reuse.
+// Always call Put() when you're done with an object from Get().
 func (p *ObjectPool[T]) Put(obj *T) {
 	// Reset the object to zero value before returning to pool
 	var zero T
@@ -56,24 +64,29 @@ var (
 	}
 )
 
-// GetErrorList gets an ErrorList from the pool
+// GetErrorList gets an ErrorList from the global pool.
+// This is optimized for gopantic's internal error handling and reduces
+// allocations during parsing operations.
 func GetErrorList() ErrorList {
 	return errorListPool.Get().(ErrorList)
 }
 
-// PutErrorList returns an ErrorList to the pool after clearing it
+// PutErrorList returns an ErrorList to the global pool after clearing it.
+// The slice is reset to zero length but capacity is preserved for reuse.
 func PutErrorList(el ErrorList) {
 	// Clear the slice but keep capacity
 	el = el[:0]
 	errorListPool.Put(&el)
 }
 
-// GetMap gets a map from the pool
+// GetMap gets a map[string]interface{} from the global pool.
+// Pre-allocated with capacity for 16 keys to optimize common parsing scenarios.
 func GetMap() map[string]interface{} {
 	return mapPool.Get().(map[string]interface{})
 }
 
-// PutMap returns a map to the pool after clearing it
+// PutMap returns a map to the global pool after clearing all entries.
+// The underlying capacity is preserved for efficient reuse.
 func PutMap(m map[string]interface{}) {
 	// Clear the map but keep capacity
 	for k := range m {
@@ -82,19 +95,31 @@ func PutMap(m map[string]interface{}) {
 	mapPool.Put(m)
 }
 
-// GetStringSlice gets a string slice from the pool
+// GetStringSlice gets a []string from the global pool.
+// Pre-allocated with capacity for 8 strings to optimize common parsing scenarios.
 func GetStringSlice() []string {
 	return stringSlicePool.Get().([]string)
 }
 
-// PutStringSlice returns a string slice to the pool after clearing it
+// PutStringSlice returns a string slice to the global pool after clearing it.
+// The slice is reset to zero length but capacity is preserved for reuse.
 func PutStringSlice(s []string) {
 	// Clear the slice but keep capacity
 	s = s[:0]
 	stringSlicePool.Put(&s)
 }
 
-// PooledParseIntoWithFormat is a version that uses object pools to reduce allocations
+// PooledParseIntoWithFormat parses data into type T using object pools to reduce memory allocations.
+// This function combines the performance benefits of OptimizedParseIntoWithFormat with object pooling
+// for maximum efficiency in high-throughput scenarios. Use this when memory allocation pressure
+// is a concern.
+//
+// Example:
+//
+//	user, err := model.PooledParseIntoWithFormat[User](jsonData, model.FormatJSON)
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
 func PooledParseIntoWithFormat[T any](raw []byte, format Format) (T, error) {
 	var zero T
 	errors := GetErrorList()
@@ -170,7 +195,9 @@ func PooledParseIntoWithFormat[T any](raw []byte, format Format) (T, error) {
 	return resultValue.Interface().(T), nil
 }
 
-// PerformanceMetrics tracks parsing performance statistics
+// PerformanceMetrics tracks parsing performance statistics across parsing operations.
+// This provides detailed insights into parsing performance, cache effectiveness,
+// and can help identify optimization opportunities.
 type PerformanceMetrics struct {
 	ParseCount  int64
 	TotalTime   int64 // nanoseconds
@@ -182,10 +209,12 @@ type PerformanceMetrics struct {
 	mutex sync.RWMutex
 }
 
-// GlobalMetrics tracks global parsing performance statistics
+// GlobalMetrics is the global instance for tracking parsing performance statistics.
+// Use this to monitor performance across your entire application.
 var GlobalMetrics = &PerformanceMetrics{}
 
-// RecordParse records a successful parse operation
+// RecordParse records a successful parse operation with timing and byte count.
+// This method is thread-safe and can be called concurrently.
 func (m *PerformanceMetrics) RecordParse(durationNs, bytes int64) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -195,7 +224,8 @@ func (m *PerformanceMetrics) RecordParse(durationNs, bytes int64) {
 	m.TotalBytes += bytes
 }
 
-// RecordError records a parse error
+// RecordError records a parse error occurrence.
+// This method is thread-safe and can be called concurrently.
 func (m *PerformanceMetrics) RecordError() {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -203,7 +233,8 @@ func (m *PerformanceMetrics) RecordError() {
 	m.ErrorCount++
 }
 
-// RecordCacheHit records a cache hit
+// RecordCacheHit records a cache hit occurrence.
+// This method is thread-safe and can be called concurrently.
 func (m *PerformanceMetrics) RecordCacheHit() {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -211,7 +242,8 @@ func (m *PerformanceMetrics) RecordCacheHit() {
 	m.CacheHits++
 }
 
-// RecordCacheMiss records a cache miss
+// RecordCacheMiss records a cache miss occurrence.
+// This method is thread-safe and can be called concurrently.
 func (m *PerformanceMetrics) RecordCacheMiss() {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -219,7 +251,8 @@ func (m *PerformanceMetrics) RecordCacheMiss() {
 	m.CacheMisses++
 }
 
-// Stats holds performance statistics
+// Stats holds performance statistics returned by GetStats().
+// All timing values are in nanoseconds, and averages are calculated across all operations.
 type Stats struct {
 	ParseCount       int64
 	ErrorCount       int64
@@ -229,7 +262,8 @@ type Stats struct {
 	AvgBytesPerParse float64
 }
 
-// GetStats returns current performance statistics
+// GetStats returns current performance statistics as a Stats struct.
+// This method is thread-safe and provides a snapshot of current metrics.
 func (m *PerformanceMetrics) GetStats() Stats {
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
@@ -249,7 +283,8 @@ func (m *PerformanceMetrics) GetStats() Stats {
 	return stats
 }
 
-// Reset resets all metrics to zero
+// Reset resets all metrics to zero.
+// This method is thread-safe and useful for resetting measurements.
 func (m *PerformanceMetrics) Reset() {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()

@@ -112,7 +112,8 @@ type CacheConfig struct {
 	RedisConfig *RedisConfig
 }
 
-// DefaultCacheConfig returns a reasonable default configuration
+// DefaultCacheConfig returns a reasonable default configuration for in-memory caching.
+// Uses 1-hour TTL, 1000 entry limit, compression enabled, and memory backend.
 func DefaultCacheConfig() *CacheConfig {
 	return &CacheConfig{
 		TTL:                time.Hour,          // 1 hour default TTL
@@ -150,7 +151,9 @@ func DefaultRedisCacheConfig(addr string) *CacheConfig {
 	}
 }
 
-// CachedParser provides caching functionality for parsing operations
+// CachedParser provides high-performance caching functionality for parsing operations.
+// It supports both in-memory and Redis distributed caching backends, automatically
+// handling cache key generation, TTL management, and graceful degradation.
 type CachedParser[T any] struct {
 	cache  *obcache.Cache
 	config *CacheConfig
@@ -313,13 +316,29 @@ var (
 	defaultCacheConfig   = DefaultCacheConfig()
 )
 
-// ParseIntoCached provides a convenient cached parsing function
-// It uses a global cache instance per type T
+// ParseIntoCached provides convenient cached parsing with automatic format detection.
+// It uses a global cache instance per type T for maximum convenience and performance.
+// This is ideal for applications that parse the same types frequently.
+//
+// Example:
+//
+//	user, err := model.ParseIntoCached[User](jsonData)
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
 func ParseIntoCached[T any](raw []byte) (T, error) {
 	return ParseIntoWithFormatCached[T](raw, DetectFormat(raw))
 }
 
-// ParseIntoWithFormatCached provides cached parsing with explicit format
+// ParseIntoWithFormatCached provides cached parsing with explicit format specification.
+// Uses a global cache instance per type T for optimal performance in repeated parsing scenarios.
+//
+// Example:
+//
+//	config, err := model.ParseIntoWithFormatCached[Config](yamlData, model.FormatYAML)
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
 func ParseIntoWithFormatCached[T any](raw []byte, format Format) (T, error) {
 	var zero T
 	targetType := reflect.TypeOf(zero)
@@ -372,14 +391,18 @@ func generateGlobalCacheKey(raw []byte, format Format) string {
 	return fmt.Sprintf("%s:%s", contentHash, formatStr)
 }
 
-// ClearAllCaches clears all global cached parsers
+// ClearAllCaches clears all global cached parsers.
+// This is useful for testing or when you need to reset all cached parsing results.
+// Note: This affects all cached parsing operations across the application.
 func ClearAllCaches() {
 	for _, cache := range defaultCachedParsers {
 		_ = cache.Clear()
 	}
 }
 
-// GetGlobalCacheStats returns statistics for all global caches
+// GetGlobalCacheStats returns performance statistics for all global caches.
+// The returned map contains cache statistics keyed by type name.
+// Use this to monitor cache effectiveness and optimize cache configurations.
 func GetGlobalCacheStats() map[string]*obcache.Stats {
 	stats := make(map[string]*obcache.Stats)
 	for typeKey, cache := range defaultCachedParsers {

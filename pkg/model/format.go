@@ -7,7 +7,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Format represents the input data format
+// Format represents the input data format for parsing operations.
+// Supports JSON and YAML formats with automatic detection capabilities.
 type Format int
 
 const (
@@ -17,7 +18,9 @@ const (
 	FormatYAML
 )
 
-// FormatParser defines the interface for parsing different data formats
+// FormatParser defines the interface for parsing different data formats.
+// Implementations handle format-specific parsing logic while providing
+// a consistent interface for the core parsing engine.
 type FormatParser interface {
 	// Parse parses raw bytes into a generic map structure
 	Parse(raw []byte) (map[string]interface{}, error)
@@ -25,7 +28,8 @@ type FormatParser interface {
 	Format() Format
 }
 
-// JSONParser implements FormatParser for JSON format
+// JSONParser implements FormatParser for JSON format.
+// Provides high-performance JSON parsing with standard library compatibility.
 type JSONParser struct{}
 
 // Parse parses JSON data into a generic map
@@ -42,7 +46,8 @@ func (jp *JSONParser) Format() Format {
 	return FormatJSON
 }
 
-// YAMLParser implements FormatParser for YAML format
+// YAMLParser implements FormatParser for YAML format.
+// Supports all YAML 1.2 features including documents, arrays, and nested structures.
 type YAMLParser struct{}
 
 // Parse parses YAML data into a generic map
@@ -59,7 +64,14 @@ func (yp *YAMLParser) Format() Format {
 	return FormatYAML
 }
 
-// DetectFormat attempts to detect the data format from raw bytes
+// DetectFormat automatically detects the format of the given raw data.
+// Uses heuristic analysis to distinguish between JSON and YAML formats.
+// Returns FormatJSON as the default for ambiguous cases.
+//
+// Example:
+//
+//	format := model.DetectFormat(data)
+//	result, err := model.ParseIntoWithFormat[MyStruct](data, format)
 func DetectFormat(raw []byte) Format {
 	// Try to detect based on content characteristics
 	if len(raw) == 0 {
@@ -175,7 +187,13 @@ func trimLeadingSpace(s string) string {
 	return s[i:]
 }
 
-// GetParser returns the appropriate parser for the given format
+// GetParser returns the appropriate parser instance for the given format.
+// This function provides access to format-specific parsers for advanced use cases.
+//
+// Example:
+//
+//	parser := model.GetParser(model.FormatJSON)
+//	data, err := parser.Parse(rawBytes)
 func GetParser(format Format) FormatParser {
 	switch format {
 	case FormatYAML:

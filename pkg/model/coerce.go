@@ -7,12 +7,28 @@ import (
 	"time"
 )
 
-// CoerceValue attempts to coerce a value to the target type (JSON format by default)
+// CoerceValue attempts to coerce a value to the target type with intelligent type conversion.
+// Uses JSON format assumptions by default. Supports conversion between strings, numbers,
+// booleans, time.Time, slices, arrays, and nested structs.
+//
+// Example:
+//
+//	result, err := model.CoerceValue("123", reflect.TypeOf(0), "user_id")
+//	// result will be int(123)
 func CoerceValue(value interface{}, targetType reflect.Type, fieldName string) (interface{}, error) {
 	return CoerceValueWithFormat(value, targetType, fieldName, FormatJSON)
 }
 
-// CoerceValueWithFormat attempts to coerce a value to the target type with format awareness
+// CoerceValueWithFormat attempts to coerce a value to the target type with format-specific awareness.
+// Different formats may have different type coercion rules and conventions.
+// This is the core type coercion function used by all parsing operations.
+//
+// Supported conversions include:
+// - String <-> numeric types (int, float, etc.)
+// - String <-> bool (true/false, 1/0, yes/no, etc.)
+// - String/numeric -> time.Time (various formats)
+// - Array/slice element coercion
+// - Map -> struct conversion with nested coercion
 func CoerceValueWithFormat(value interface{}, targetType reflect.Type, fieldName string, format Format) (interface{}, error) {
 	if value == nil {
 		return getZeroValueForType(targetType), nil
