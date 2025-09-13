@@ -21,11 +21,11 @@ type UserRegistration struct {
 
 // AccountSettings demonstrates cross-field validation for account configuration
 type AccountSettings struct {
-	Email           string `json:"email" validate:"required,email"`
+	Email             string `json:"email" validate:"required,email"`
 	NotificationEmail string `json:"notification_email" validate:"email,email_different"`
-	CurrentPassword string `json:"current_password" validate:"required,min=8"`
-	NewPassword     string `json:"new_password,omitempty" validate:"min=8,password_different"`
-	ConfirmPassword string `json:"confirm_password,omitempty" validate:"new_password_match"`
+	CurrentPassword   string `json:"current_password" validate:"required,min=8"`
+	NewPassword       string `json:"new_password,omitempty" validate:"min=8,password_different"`
+	ConfirmPassword   string `json:"confirm_password,omitempty" validate:"new_password_match"`
 }
 
 // PriceRange demonstrates numeric cross-field validation
@@ -76,7 +76,7 @@ func init() {
 		expectedFullName := firstName + " " + lastName
 
 		if fullName != expectedFullName {
-			return model.NewValidationError(fieldName, fieldValue, "full_name_match", 
+			return model.NewValidationError(fieldName, fieldValue, "full_name_match",
 				fmt.Sprintf("full name must match first and last name: expected %q", expectedFullName))
 		}
 
@@ -138,7 +138,7 @@ func init() {
 		}
 
 		newPassword := newPasswordField.String()
-		
+
 		// Only validate if new password is provided
 		if newPassword == "" && confirmPassword == "" {
 			return nil
@@ -165,7 +165,7 @@ func init() {
 
 		minPrice := minPriceField.Float()
 		if maxPrice <= minPrice {
-			return model.NewValidationError(fieldName, fieldValue, "max_greater_than_min", 
+			return model.NewValidationError(fieldName, fieldValue, "max_greater_than_min",
 				fmt.Sprintf("max price (%.2f) must be greater than min price (%.2f)", maxPrice, minPrice))
 		}
 
@@ -310,7 +310,7 @@ func main() {
 
 	// Example 9: Demonstrating optional cross-field validation
 	fmt.Println("\n9. Optional Cross-Field Validation:")
-	
+
 	// Full name is optional - should pass without full_name field
 	optionalJSON := `{
 		"username": "janedoe",

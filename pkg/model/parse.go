@@ -261,22 +261,21 @@ func parseIntoSlice[T any](data interface{}, resultType reflect.Type, format For
 		return zero, errors.AsError()
 	}
 
-
 	if resultType.Kind() == reflect.Slice {
 		// Handle slice parsing
 		slice := reflect.MakeSlice(resultType, len(dataSlice), len(dataSlice))
-		
+
 		for i, item := range dataSlice {
 			elemValue := slice.Index(i)
 			if err := setFieldValue(elemValue, item, fmt.Sprintf("[%d]", i), format); err != nil {
 				errors.Add(err)
 			}
 		}
-		
+
 		if len(errors) > 0 {
 			return zero, errors.AsError()
 		}
-		
+
 		return slice.Interface().(T), nil
 	} else if resultType.Kind() == reflect.Array {
 		// Handle array parsing
@@ -285,20 +284,20 @@ func parseIntoSlice[T any](data interface{}, resultType reflect.Type, format For
 			errors.Add(fmt.Errorf("array length mismatch: expected %d elements, got %d", arrayLen, len(dataSlice)))
 			return zero, errors.AsError()
 		}
-		
+
 		array := reflect.New(resultType).Elem()
-		
+
 		for i, item := range dataSlice {
 			elemValue := array.Index(i)
 			if err := setFieldValue(elemValue, item, fmt.Sprintf("[%d]", i), format); err != nil {
 				errors.Add(err)
 			}
 		}
-		
+
 		if len(errors) > 0 {
 			return zero, errors.AsError()
 		}
-		
+
 		return array.Interface().(T), nil
 	}
 
