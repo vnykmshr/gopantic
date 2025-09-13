@@ -1,0 +1,262 @@
+# Default values for gopantic-app
+# This is a YAML-formatted file for Helm chart configuration
+
+# Global settings
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+
+# Application configuration
+app:
+  name: gopantic-app
+  version: "1.0.0"
+
+# Image configuration
+image:
+  registry: docker.io
+  repository: your-org/gopantic-app
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+  metricsPort: 8081
+  annotations: {}
+
+# Ingress configuration
+ingress:
+  enabled: false
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: your-app.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: gopantic-app-tls
+      hosts:
+        - your-app.example.com
+
+# Deployment configuration
+deployment:
+  replicaCount: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  
+  # Pod disruption budget
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 2
+
+# Container configuration
+container:
+  port: 8080
+  metricsPort: 8081
+  
+  # Resource limits and requests
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  
+  # Health checks
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: 8080
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+    successThreshold: 1
+  
+  readinessProbe:
+    httpGet:
+      path: /ready
+      port: 8080
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+    successThreshold: 1
+
+# Security configuration
+security:
+  enabled: true
+  runAsNonRoot: true
+  runAsUser: 65534
+  fsGroup: 65534
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+# Service account
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+# Pod security context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65534
+  fsGroup: 65534
+
+# Network policies
+networkPolicy:
+  enabled: true
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            name: ingress-nginx
+      - podSelector:
+          matchLabels:
+            app: prometheus
+      ports:
+      - protocol: TCP
+        port: 8080
+      - protocol: TCP
+        port: 8081
+  egress:
+    - to:
+      - podSelector:
+          matchLabels:
+            app: redis
+      ports:
+      - protocol: TCP
+        port: 6379
+    - to: []
+      ports:
+      - protocol: TCP
+        port: 53
+      - protocol: UDP
+        port: 53
+    - to: []
+      ports:
+      - protocol: TCP
+        port: 443
+      - protocol: TCP
+        port: 80
+
+# Environment variables
+env:
+  # Gopantic configuration
+  GOPANTIC_STREAM_WORKERS: "10"
+  GOPANTIC_CACHE_ENABLED: "true"
+  GOPANTIC_CACHE_BACKEND: "redis"
+  GOPANTIC_METRICS_ENABLED: "true"
+  GOPANTIC_LOG_LEVEL: "info"
+  GOPANTIC_CIRCUIT_BREAKER_THRESHOLD: "0.1"
+  GOPANTIC_RETRY_ATTEMPTS: "3"
+  GOPANTIC_RETRY_BACKOFF: "100ms"
+  
+  # Application environment
+  GO_ENV: "production"
+  GIN_MODE: "release"
+
+# Secret environment variables (from Kubernetes secrets)
+secretEnv: {}
+  # GOPANTIC_REDIS_PASSWORD:
+  #   secretName: redis-secret
+  #   key: password
+
+# Redis configuration
+redis:
+  enabled: true
+  host: redis
+  port: 6379
+  database: 0
+  # password: "" # Set via secret
+
+# Monitoring configuration
+monitoring:
+  enabled: true
+  prometheus:
+    enabled: true
+    port: 8081
+    path: /metrics
+    scrapeInterval: 30s
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "8081"
+      prometheus.io/path: "/metrics"
+
+# Horizontal Pod Autoscaler
+autoscaling:
+  enabled: false
+  minReplicas: 3
+  maxReplicas: 20
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# Node affinity and tolerations
+nodeSelector: {}
+
+tolerations: []
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      podAffinityTerm:
+        labelSelector:
+          matchExpressions:
+          - key: app
+            operator: In
+            values:
+            - gopantic-app
+        topologyKey: kubernetes.io/hostname
+
+# Volumes and volume mounts
+volumes:
+  - name: tmp-volume
+    emptyDir: {}
+
+volumeMounts:
+  - name: tmp-volume
+    mountPath: /tmp
+
+# ConfigMaps to create
+configMaps: {}
+
+# Secrets to create
+secrets: {}
+
+# Additional labels
+labels: {}
+
+# Additional annotations
+annotations: {}
+
+# Pod annotations
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8081"
+  prometheus.io/path: "/metrics"
+
+# Init containers
+initContainers: []
+
+# Sidecar containers
+sidecars: []
+
+# Pod termination grace period
+terminationGracePeriodSeconds: 30

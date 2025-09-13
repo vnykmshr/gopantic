@@ -1,0 +1,21 @@
+apiVersion: v2
+name: gopantic-app
+description: A Helm chart for deploying Gopantic-based applications with enterprise features
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - gopantic
+  - data-parsing
+  - streaming
+  - validation
+  - performance
+home: https://github.com/vnykmshr/gopantic
+sources:
+  - https://github.com/vnykmshr/gopantic
+maintainers:
+  - name: Gopantic Team
+    email: maintainers@gopantic.dev
+annotations:
+  category: DataProcessing
+  licenses: MIT
