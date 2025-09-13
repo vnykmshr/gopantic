@@ -165,7 +165,7 @@ func BenchmarkStreamProcessor_Small_2Workers(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		
+
 		resultStream, err := processor.ProcessStream(ctx, data)
 		if err != nil {
 			b.Fatalf("Failed to process stream: %v", err)
@@ -209,7 +209,7 @@ func BenchmarkStreamProcessor_Medium_5Workers(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		
+
 		resultStream, err := processor.ProcessStream(ctx, data)
 		if err != nil {
 			b.Fatalf("Failed to process stream: %v", err)
@@ -253,7 +253,7 @@ func BenchmarkStreamProcessor_Large_10Workers(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-		
+
 		resultStream, err := processor.ProcessStream(ctx, data)
 		if err != nil {
 			b.Fatalf("Failed to process stream: %v", err)
@@ -298,7 +298,7 @@ func BenchmarkStreamProcessor_Large_20Workers(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-		
+
 		resultStream, err := processor.ProcessStream(ctx, data)
 		if err != nil {
 			b.Fatalf("Failed to process stream: %v", err)
@@ -405,7 +405,7 @@ func BenchmarkMemory_StreamProcessor_1000Items(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		
+
 		resultStream, err := processor.ProcessStream(ctx, data)
 		if err != nil {
 			b.Fatalf("Failed to process stream: %v", err)
