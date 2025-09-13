@@ -22,8 +22,9 @@ const (
 // Implementations handle format-specific parsing logic while providing
 // a consistent interface for the core parsing engine.
 type FormatParser interface {
-	// Parse parses raw bytes into a generic map structure
-	Parse(raw []byte) (map[string]interface{}, error)
+	// Parse parses raw bytes into a generic interface{} structure
+	// Can return map[string]interface{} for objects or []interface{} for arrays
+	Parse(raw []byte) (interface{}, error)
 	// Format returns the format type this parser handles
 	Format() Format
 }
@@ -32,9 +33,9 @@ type FormatParser interface {
 // Provides high-performance JSON parsing with standard library compatibility.
 type JSONParser struct{}
 
-// Parse parses JSON data into a generic map
-func (jp *JSONParser) Parse(raw []byte) (map[string]interface{}, error) {
-	var data map[string]interface{}
+// Parse parses JSON data into a generic interface{}
+func (jp *JSONParser) Parse(raw []byte) (interface{}, error) {
+	var data interface{}
 	if err := json.Unmarshal(raw, &data); err != nil {
 		return nil, fmt.Errorf("json parse error: %w", err)
 	}
@@ -50,9 +51,9 @@ func (jp *JSONParser) Format() Format {
 // Supports all YAML 1.2 features including documents, arrays, and nested structures.
 type YAMLParser struct{}
 
-// Parse parses YAML data into a generic map
-func (yp *YAMLParser) Parse(raw []byte) (map[string]interface{}, error) {
-	var data map[string]interface{}
+// Parse parses YAML data into a generic interface{}
+func (yp *YAMLParser) Parse(raw []byte) (interface{}, error) {
+	var data interface{}
 	if err := yaml.Unmarshal(raw, &data); err != nil {
 		return nil, fmt.Errorf("yaml parse error: %w", err)
 	}

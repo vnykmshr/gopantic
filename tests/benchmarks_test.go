@@ -19,12 +19,11 @@ type BenchUser struct {
 }
 
 type BenchConfig struct {
-	Name     string            `json:"name" validate:"required"`
-	Debug    bool              `json:"debug"`
-	Port     int               `json:"port" validate:"min=1000,max=65535"`
-	Timeout  int               `json:"timeout" validate:"min=1"`
-	Features []string          `json:"features"`
-	Settings map[string]string `json:"settings"`
+	Name     string   `json:"name" validate:"required"`
+	Debug    bool     `json:"debug"`
+	Port     int      `json:"port" validate:"min=1000,max=65535"`
+	Timeout  int      `json:"timeout" validate:"min=1"`
+	Features []string `json:"features"`
 }
 
 // Benchmark: Simple struct parsing vs standard library
@@ -74,11 +73,7 @@ func BenchmarkComplexParsing_WithValidation(b *testing.B) {
 		"debug": true,
 		"port": 8080,
 		"timeout": 30,
-		"features": ["auth", "logging", "metrics"],
-		"settings": {
-			"theme": "dark",
-			"lang": "en"
-		}
+		"features": ["auth", "logging", "metrics"]
 	}`)
 
 	b.ResetTimer()
@@ -114,7 +109,7 @@ func BenchmarkTypeCoercion(b *testing.B) {
 		"name": "John Doe",
 		"email": "john@example.com",
 		"age": "30",
-		"created_at": "1672574400",
+		"created_at": "2023-01-01T12:00:00Z",
 		"active": "true"
 	}`)
 

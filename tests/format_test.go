@@ -102,8 +102,12 @@ age: 30`)
 	if err != nil {
 		t.Fatalf("JSON parser failed: %v", err)
 	}
-	if jsonResult["name"] != "John" {
-		t.Errorf("JSON parser result incorrect: got %v, want John", jsonResult["name"])
+	jsonMap, ok := jsonResult.(map[string]interface{})
+	if !ok {
+		t.Fatalf("JSON parser should return map[string]interface{}, got %T", jsonResult)
+	}
+	if jsonMap["name"] != "John" {
+		t.Errorf("JSON parser result incorrect: got %v, want John", jsonMap["name"])
 	}
 
 	// Test YAML parser
@@ -112,7 +116,11 @@ age: 30`)
 	if err != nil {
 		t.Fatalf("YAML parser failed: %v", err)
 	}
-	if yamlResult["name"] != "John" {
-		t.Errorf("YAML parser result incorrect: got %v, want John", yamlResult["name"])
+	yamlMap, ok := yamlResult.(map[string]interface{})
+	if !ok {
+		t.Fatalf("YAML parser should return map[string]interface{}, got %T", yamlResult)
+	}
+	if yamlMap["name"] != "John" {
+		t.Errorf("YAML parser result incorrect: got %v, want John", yamlMap["name"])
 	}
 }

@@ -44,7 +44,7 @@ func ParseIntoWithFormat[T any](raw []byte, format Format) (T, error) {
 	// Get the appropriate parser for the format
 	parser := GetParser(format)
 
-	// Parse into a generic map structure
+	// Parse into a generic interface{} structure
 	data, err := parser.Parse(raw)
 	if err != nil {
 		errors.Add(err)
@@ -54,6 +54,19 @@ func ParseIntoWithFormat[T any](raw []byte, format Format) (T, error) {
 	// Create new instance of T
 	resultValue := reflect.New(reflect.TypeOf(zero)).Elem()
 	resultType := resultValue.Type()
+
+	// Handle different target types
+	if resultType.Kind() == reflect.Slice || resultType.Kind() == reflect.Array {
+		// Handle array/slice parsing
+		return parseIntoSlice[T](data, resultType, format)
+	}
+
+	// Ensure data is a map for struct parsing
+	dataMap, ok := data.(map[string]interface{})
+	if !ok {
+		errors.Add(fmt.Errorf("cannot parse non-object data into struct"))
+		return zero, errors.AsError()
+	}
 
 	// Parse validation rules for this struct type
 	validation := ParseValidationTags(resultType)
@@ -75,7 +88,7 @@ func ParseIntoWithFormat[T any](raw []byte, format Format) (T, error) {
 		}
 
 		// Get value from data map
-		rawValue, exists := data[fieldKey]
+		rawValue, exists := dataMap[fieldKey]
 		if !exists {
 			// Field not present in data, leave as zero value
 			rawValue = nil
@@ -234,4 +247,61 @@ func validateFieldValueWithStruct(fieldName, jsonKey string, value interface{}, 
 
 	// No validation rules found for this field
 	return nil
+}
+
+// parseIntoSlice handles parsing of array/slice data into slice/array types
+func parseIntoSlice[T any](data interface{}, resultType reflect.Type, format Format) (T, error) {
+	var zero T
+	var errors ErrorList
+
+	// Ensure data is an array
+	dataSlice, ok := data.([]interface{})
+	if !ok {
+		errors.Add(fmt.Errorf("cannot parse non-array data into slice/array"))
+		return zero, errors.AsError()
+	}
+
+
+	if resultType.Kind() == reflect.Slice {
+		// Handle slice parsing
+		slice := reflect.MakeSlice(resultType, len(dataSlice), len(dataSlice))
+		
+		for i, item := range dataSlice {
+			elemValue := slice.Index(i)
+			if err := setFieldValue(elemValue, item, fmt.Sprintf("[%d]", i), format); err != nil {
+				errors.Add(err)
+			}
+		}
+		
+		if len(errors) > 0 {
+			return zero, errors.AsError()
+		}
+		
+		return slice.Interface().(T), nil
+	} else if resultType.Kind() == reflect.Array {
+		// Handle array parsing
+		arrayLen := resultType.Len()
+		if len(dataSlice) != arrayLen {
+			errors.Add(fmt.Errorf("array length mismatch: expected %d elements, got %d", arrayLen, len(dataSlice)))
+			return zero, errors.AsError()
+		}
+		
+		array := reflect.New(resultType).Elem()
+		
+		for i, item := range dataSlice {
+			elemValue := array.Index(i)
+			if err := setFieldValue(elemValue, item, fmt.Sprintf("[%d]", i), format); err != nil {
+				errors.Add(err)
+			}
+		}
+		
+		if len(errors) > 0 {
+			return zero, errors.AsError()
+		}
+		
+		return array.Interface().(T), nil
+	}
+
+	errors.Add(fmt.Errorf("unsupported type: %s", resultType.Kind()))
+	return zero, errors.AsError()
 }
