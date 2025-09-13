@@ -33,15 +33,25 @@ type StructValidation struct {
 	Fields []FieldValidation // Validation rules for each field
 }
 
+// ValidatorFunc represents a custom validation function
+type ValidatorFunc func(fieldName string, value interface{}, params map[string]interface{}) error
+
+// CrossFieldValidatorFunc represents a validation function that has access to the entire struct
+type CrossFieldValidatorFunc func(fieldName string, fieldValue interface{}, structValue reflect.Value, params map[string]interface{}) error
+
 // ValidatorRegistry manages the collection of available validators
 type ValidatorRegistry struct {
-	validators map[string]func(params map[string]interface{}) Validator
+	validators      map[string]func(params map[string]interface{}) Validator
+	customFuncs     map[string]ValidatorFunc
+	crossFieldFuncs map[string]CrossFieldValidatorFunc
 }
 
 // NewValidatorRegistry creates a new validator registry with built-in validators
 func NewValidatorRegistry() *ValidatorRegistry {
 	registry := &ValidatorRegistry{
-		validators: make(map[string]func(params map[string]interface{}) Validator),
+		validators:      make(map[string]func(params map[string]interface{}) Validator),
+		customFuncs:     make(map[string]ValidatorFunc),
+		crossFieldFuncs: make(map[string]CrossFieldValidatorFunc),
 	}
 
 	// Register built-in validators
@@ -96,11 +106,120 @@ func (r *ValidatorRegistry) Register(name string, factory func(params map[string
 	r.validators[name] = factory
 }
 
+// RegisterFunc adds a custom validation function to the registry.
+// Custom functions provide a simpler API for common validation cases.
+//
+// Example usage:
+//
+//	registry := model.GetDefaultRegistry()
+//	registry.RegisterFunc("contains", func(fieldName string, value interface{}, params map[string]interface{}) error {
+//	    str, ok := value.(string)
+//	    if !ok {
+//	        return fmt.Errorf("value must be a string")
+//	    }
+//
+//	    substring, ok := params["value"].(string)
+//	    if !ok {
+//	        return fmt.Errorf("contains validator requires a string parameter")
+//	    }
+//
+//	    if !strings.Contains(str, substring) {
+//	        return model.NewValidationError(fieldName, value, "contains",
+//	            fmt.Sprintf("value must contain '%s'", substring))
+//	    }
+//	    return nil
+//	})
+func (r *ValidatorRegistry) RegisterFunc(name string, validatorFunc ValidatorFunc) {
+	r.customFuncs[name] = validatorFunc
+}
+
+// RegisterCrossFieldFunc adds a cross-field validation function to the registry.
+// Cross-field validators have access to the entire struct and can validate relationships between fields.
+//
+// Example usage:
+//
+//	registry.RegisterCrossFieldFunc("password_match", func(fieldName string, fieldValue interface{}, structValue reflect.Value, params map[string]interface{}) error {
+//	    password := structValue.FieldByName("Password").Interface().(string)
+//	    confirmPassword, ok := fieldValue.(string)
+//	    if !ok {
+//	        return model.NewValidationError(fieldName, fieldValue, "password_match", "value must be a string")
+//	    }
+//
+//	    if password != confirmPassword {
+//	        return model.NewValidationError(fieldName, fieldValue, "password_match", "passwords do not match")
+//	    }
+//
+//	    return nil
+//	})
+func (r *ValidatorRegistry) RegisterCrossFieldFunc(name string, validatorFunc CrossFieldValidatorFunc) {
+	r.crossFieldFuncs[name] = validatorFunc
+}
+
+// CustomFuncValidator wraps a ValidatorFunc to implement the Validator interface
+type CustomFuncValidator struct {
+	name   string
+	fn     ValidatorFunc
+	params map[string]interface{}
+}
+
+// Name returns the name of the custom validator
+func (v *CustomFuncValidator) Name() string {
+	return v.name
+}
+
+// Validate executes the custom validation function
+func (v *CustomFuncValidator) Validate(fieldName string, value interface{}) error {
+	return v.fn(fieldName, value, v.params)
+}
+
+// CrossFieldValidator wraps a CrossFieldValidatorFunc to implement special validation interface
+type CrossFieldValidator struct {
+	name   string
+	fn     CrossFieldValidatorFunc
+	params map[string]interface{}
+}
+
+// Name returns the name of the cross-field validator
+func (v *CrossFieldValidator) Name() string {
+	return v.name
+}
+
+// Validate returns an error as cross-field validators require full struct context
+func (v *CrossFieldValidator) Validate(fieldName string, value interface{}) error {
+	// This should not be called directly - cross-field validation requires the full struct
+	return NewValidationError(fieldName, value, v.name, "cross-field validator requires full struct context")
+}
+
+// ValidateWithStruct performs cross-field validation with access to the full struct
+func (v *CrossFieldValidator) ValidateWithStruct(fieldName string, fieldValue interface{}, structValue reflect.Value) error {
+	return v.fn(fieldName, fieldValue, structValue, v.params)
+}
+
 // Create creates a validator instance from the registry
 func (r *ValidatorRegistry) Create(name string, params map[string]interface{}) Validator {
+	// Check cross-field functions first
+	if crossFieldFunc, exists := r.crossFieldFuncs[name]; exists {
+		return &CrossFieldValidator{
+			name:   name,
+			fn:     crossFieldFunc,
+			params: params,
+		}
+	}
+
+	// Check custom functions next
+	if customFunc, exists := r.customFuncs[name]; exists {
+		return &CustomFuncValidator{
+			name:   name,
+			fn:     customFunc,
+			params: params,
+		}
+	}
+
+	// Fall back to built-in validators
 	if factory, exists := r.validators[name]; exists {
 		return factory(params)
 	}
+
 	return nil // Unknown validator
 }
 
@@ -110,6 +229,84 @@ var defaultRegistry = NewValidatorRegistry()
 // GetDefaultRegistry returns the default global validator registry
 func GetDefaultRegistry() *ValidatorRegistry {
 	return defaultRegistry
+}
+
+// RegisterGlobalFunc is a convenience function to register a custom validation function
+// to the default global registry.
+//
+// Example usage:
+//
+//	model.RegisterGlobalFunc("password_strength", func(fieldName string, value interface{}, params map[string]interface{}) error {
+//	    password, ok := value.(string)
+//	    if !ok || password == "" {
+//	        return nil // handled by required validator
+//	    }
+//
+//	    if len(password) < 8 {
+//	        return model.NewValidationError(fieldName, value, "password_strength", "password must be at least 8 characters")
+//	    }
+//
+//	    hasUpper := strings.ContainsAny(password, "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+//	    hasLower := strings.ContainsAny(password, "abcdefghijklmnopqrstuvwxyz")
+//	    hasDigit := strings.ContainsAny(password, "0123456789")
+//
+//	    if !hasUpper || !hasLower || !hasDigit {
+//	        return model.NewValidationError(fieldName, value, "password_strength", "password must contain uppercase, lowercase, and numeric characters")
+//	    }
+//
+//	    return nil
+//	})
+func RegisterGlobalFunc(name string, validatorFunc ValidatorFunc) {
+	defaultRegistry.RegisterFunc(name, validatorFunc)
+}
+
+// RegisterGlobalCrossFieldFunc is a convenience function to register a cross-field validation function
+// to the default global registry.
+//
+// Example usage:
+//
+//	model.RegisterGlobalCrossFieldFunc("password_match", func(fieldName string, fieldValue interface{}, structValue reflect.Value, params map[string]interface{}) error {
+//	    passwordField := structValue.FieldByName("Password")
+//	    if !passwordField.IsValid() {
+//	        return model.NewValidationError(fieldName, fieldValue, "password_match", "Password field not found")
+//	    }
+//
+//	    password := passwordField.Interface().(string)
+//	    confirmPassword, ok := fieldValue.(string)
+//	    if !ok {
+//	        return model.NewValidationError(fieldName, fieldValue, "password_match", "value must be a string")
+//	    }
+//
+//	    if password != confirmPassword {
+//	        return model.NewValidationError(fieldName, fieldValue, "password_match", "passwords do not match")
+//	    }
+//
+//	    return nil
+//	})
+func RegisterGlobalCrossFieldFunc(name string, validatorFunc CrossFieldValidatorFunc) {
+	defaultRegistry.RegisterCrossFieldFunc(name, validatorFunc)
+}
+
+// ListValidators returns a list of all registered validator names (built-in, custom, and cross-field)
+func (r *ValidatorRegistry) ListValidators() []string {
+	names := make([]string, 0, len(r.validators)+len(r.customFuncs)+len(r.crossFieldFuncs))
+
+	// Add built-in validators
+	for name := range r.validators {
+		names = append(names, name)
+	}
+
+	// Add custom function validators
+	for name := range r.customFuncs {
+		names = append(names, name)
+	}
+
+	// Add cross-field validators
+	for name := range r.crossFieldFuncs {
+		names = append(names, name)
+	}
+
+	return names
 }
 
 // ParseValidationTags parses validation tags from a struct and returns validation info
@@ -220,6 +417,27 @@ func ValidateValue(fieldName string, value interface{}, rules []ValidationRule) 
 	for _, rule := range rules {
 		if err := rule.Validator.Validate(fieldName, value); err != nil {
 			errors.Add(err)
+		}
+	}
+
+	return errors.AsError()
+}
+
+// ValidateValueWithStruct applies validation rules to a single value with access to the full struct
+func ValidateValueWithStruct(fieldName string, value interface{}, rules []ValidationRule, structValue reflect.Value) error {
+	var errors ErrorList
+
+	for _, rule := range rules {
+		// Check if this is a cross-field validator
+		if crossFieldValidator, ok := rule.Validator.(*CrossFieldValidator); ok {
+			if err := crossFieldValidator.ValidateWithStruct(fieldName, value, structValue); err != nil {
+				errors.Add(err)
+			}
+		} else {
+			// Regular validator
+			if err := rule.Validator.Validate(fieldName, value); err != nil {
+				errors.Add(err)
+			}
 		}
 	}
 

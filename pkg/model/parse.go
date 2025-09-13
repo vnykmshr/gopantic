@@ -35,7 +35,7 @@ func ParseIntoWithFormat[T any](raw []byte, format Format) (T, error) {
 	// Parse validation rules for this struct type
 	validation := ParseValidationTags(resultType)
 
-	// Process each field in the struct
+	// Process each field in the struct (parsing and coercion pass)
 	for i := 0; i < resultType.NumField(); i++ {
 		field := resultType.Field(i)
 		fieldValue := resultValue.Field(i)
@@ -61,11 +61,27 @@ func ParseIntoWithFormat[T any](raw []byte, format Format) (T, error) {
 		// Coerce and set the value
 		if err := setFieldValue(fieldValue, rawValue, field.Name, format); err != nil {
 			errors.Add(err)
-			continue // Skip validation if coercion failed
+		}
+	}
+
+	// Validation pass - now that all fields are parsed, we can do cross-field validation
+	for i := 0; i < resultType.NumField(); i++ {
+		field := resultType.Field(i)
+		fieldValue := resultValue.Field(i)
+
+		// Skip unexported fields
+		if !fieldValue.CanSet() {
+			continue
 		}
 
-		// Apply validation rules
-		if err := validateFieldValue(field.Name, fieldKey, fieldValue.Interface(), validation); err != nil {
+		// Get field key from appropriate tag (json or yaml), fallback to field name
+		fieldKey := getFieldKey(field, format)
+		if fieldKey == "-" {
+			continue // Skip fields with tag:"-"
+		}
+
+		// Apply validation rules (including cross-field validators)
+		if err := validateFieldValueWithStruct(field.Name, fieldKey, fieldValue.Interface(), validation, resultValue); err != nil {
 			errors.Add(err)
 		}
 	}
@@ -177,6 +193,19 @@ func validateFieldValue(fieldName, jsonKey string, value interface{}, validation
 		if fieldValidation.FieldName == fieldName || fieldValidation.JSONKey == jsonKey {
 			// Apply all validation rules for this field
 			return ValidateValue(fieldName, value, fieldValidation.Rules)
+		}
+	}
+
+	// No validation rules found for this field
+	return nil
+}
+
+func validateFieldValueWithStruct(fieldName, jsonKey string, value interface{}, validation *StructValidation, structValue reflect.Value) error {
+	// Find validation rules for this field
+	for _, fieldValidation := range validation.Fields {
+		if fieldValidation.FieldName == fieldName || fieldValidation.JSONKey == jsonKey {
+			// Apply all validation rules for this field (including cross-field validators)
+			return ValidateValueWithStruct(fieldName, value, fieldValidation.Rules, structValue)
 		}
 	}
 

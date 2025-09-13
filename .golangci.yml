@@ -88,6 +88,7 @@ issues:
         - errcheck
         - dupl
         - gosec
+        - gocritic
         
     # Exclude known linters from generated files
     - path: ".*\\.pb\\.go"
