@@ -253,9 +253,10 @@ func (v *ExternalEmailValidator) validateWithExternalService(email, cacheKey str
 		return fmt.Errorf("failed to read validation response: %w", err)
 	}
 
-	// Simple validation: if response contains "valid", consider it valid
+	// Simple validation: check for specific status patterns
 	// In practice, you would parse JSON response according to your external service
-	if strings.Contains(strings.ToLower(string(body)), "valid") {
+	bodyStr := strings.ToLower(string(body))
+	if strings.Contains(bodyStr, `"status": "valid"`) || strings.Contains(bodyStr, `"status":"valid"`) {
 		return nil
 	}
 
