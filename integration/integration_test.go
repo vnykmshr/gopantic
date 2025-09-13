@@ -371,10 +371,7 @@ features:
 
 // Test caching functionality
 func TestIntegration_CachedParsing(t *testing.T) {
-	parser, err := model.NewCachedParser[E2EUser](nil)
-	if err != nil {
-		t.Fatalf("Failed to create cached parser: %v", err)
-	}
+	parser := model.NewCachedParser[E2EUser](nil)
 
 	userData := `{
 		"id": 789,

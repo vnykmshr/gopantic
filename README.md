@@ -16,33 +16,21 @@
 
 ## Features ✨
 
-**Phase 1, 2, 3 & 4 (Complete):**
-- ✅ Basic JSON parsing into typed structs
-- ✅ Type coercion for `int`, `float64`, `string`, `bool`
-- ✅ Struct field mapping using `json` tags
-- ✅ **Validation framework with struct tags**
-- ✅ **Built-in validators: `required`, `min`, `max`, `email`, `alpha`, `alphanum`, `length`**
-- ✅ **Error aggregation with detailed field-level reporting**
-- ✅ **Nested struct parsing and validation with field paths**
-- ✅ **Time parsing with multiple formats (RFC3339, Unix timestamps, custom formats)**
-- ✅ **Slice and array parsing with element validation**
-- ✅ **Pointer type support for optional fields (`*string`, `*int`, `*bool`, etc.)**
-- ✅ **Deep nested struct parsing and validation**
-- ✅ **YAML support with automatic format detection**
-- ✅ **High-performance caching with obcache-go (up to 27x faster)**
-- ✅ **Format abstraction layer supporting JSON/YAML**
-- ✅ **Content-based caching with SHA256 keys**
-- ✅ **Configurable cache TTL, limits, and compression**
-- ✅ **Thread-safe operations and concurrent parsing**
-- ✅ **Comprehensive test coverage (>95%)**
-- ✅ **Performance benchmarking and optimization**
-- ✅ Comprehensive error handling and reporting
-
-**Phase 5+ (Coming Next):**
-- 📋 Custom validators and validation functions
-- 📋 Cross-field validation
-- 📋 Advanced error reporting and serialization
-- 📋 Extended format support and advanced features
+**Core Features:**
+- ✅ **JSON/YAML parsing** into typed structs with automatic format detection
+- ✅ **Type coercion** for all Go primitives (`int`, `float64`, `string`, `bool`, `time.Time`)
+- ✅ **Struct field mapping** using `json` tags
+- ✅ **Validation framework** with struct tags (`validate:"required,min=5,email"`)
+- ✅ **Built-in validators**: `required`, `min`, `max`, `email`, `alpha`, `alphanum`, `length`
+- ✅ **Custom validators** with function registration
+- ✅ **Cross-field validation** for complex business rules
+- ✅ **Error aggregation** with detailed field-level reporting
+- ✅ **Nested struct parsing** and validation with field paths
+- ✅ **Time parsing** with multiple formats (RFC3339, Unix timestamps)
+- ✅ **Array/slice parsing** with element validation and coercion
+- ✅ **Pointer type support** for optional fields (`*string`, `*int`, etc.)
+- ✅ **Simple in-memory caching** for performance optimization
+- ✅ **Thread-safe operations** for concurrent parsing
 
 ## Installation
 
