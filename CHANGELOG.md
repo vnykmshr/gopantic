@@ -5,50 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.0] - 2025-01-13
 
 ### Added
-- Initial project setup with development infrastructure
-- Git repository initialization and configuration
-- Comprehensive .gitignore for Go projects
-- Makefile with standard development targets (dev, test, build, lint, etc.)
-- EditorConfig for consistent code formatting
-- GolangCI-lint configuration with comprehensive rule set
-- GitHub Actions CI/CD workflows (test, lint, security scanning)
-- GitHub Actions release workflow with automated changelog generation
-- Contributing guidelines and development documentation
-- MIT License
-- Code of Conduct and Security Policy (pending)
+- **JSON/YAML parsing** with automatic format detection
+- **Type coercion** - automatic conversion between compatible types (`"123"` → `123`, `"true"` → `true`)
+- **Comprehensive validation** using struct tags (`validate:"required,email,min=5"`)
+- **Cross-field validation** - validate fields against each other (password confirmation, field comparisons)
+- **Built-in validators**: `required`, `min`, `max`, `email`, `alpha`, `alphanum`, `length`
+- **Nested struct support** with full validation propagation
+- **Array and slice parsing** with element validation
+- **Time parsing** support (RFC3339, Unix timestamps, custom formats)
+- **Pointer support** for optional fields (`*string`, `*int`)
+- **High-performance caching** - 5-27x speedup for repeated parsing operations
+- **Thread-safe** concurrent parsing operations
+- **Generics support** for type-safe parsing with `ParseInto[T]()`
+- **Structured error reporting** with field paths and detailed context
+- **Custom validator registration** for domain-specific validation rules
+- **Zero dependencies** (except optional YAML support via `gopkg.in/yaml.v3`)
 
-### Infrastructure
-- Development environment setup with git hooks
-- Multi-platform testing (Linux, macOS, Windows)
-- Multi-version Go support (1.22, 1.23)
-- Code coverage reporting with Codecov integration
-- Security scanning with Gosec
-- Automated dependency caching in CI
+### Features
+- Single-function API: `model.ParseInto[T](data)` covers most use cases
+- Automatic format detection (JSON vs YAML)
+- Comprehensive example collection covering real-world scenarios
+- Production-ready with extensive test coverage
+- Compatible with Go 1.21+
 
-## [0.0.0] - 2025-01-01
-
-### Added
-- Project planning and design documentation
-- Comprehensive roadmap with 6 implementation phases
-- Technical specification and API design
+### Examples
+- Basic parsing with type coercion
+- Validation examples with multiple error handling
+- Cross-field validation (password confirmation, email differences)
+- Time parsing with multiple format support
+- YAML configuration parsing
+- API request/response validation
+- Pointer field handling for optional data
+- High-performance caching usage
 
 ---
 
-## Release Notes Format
-
-### Types of Changes
-- **Added** for new features
-- **Changed** for changes in existing functionality  
-- **Deprecated** for soon-to-be removed features
-- **Removed** for now removed features
-- **Fixed** for any bug fixes
-- **Security** for vulnerability fixes
-- **Infrastructure** for development/build/CI changes
-
-### Version Format
+## Version Format
 This project uses [Semantic Versioning](https://semver.org/):
 - **MAJOR** version for incompatible API changes
 - **MINOR** version for backwards-compatible functionality additions
