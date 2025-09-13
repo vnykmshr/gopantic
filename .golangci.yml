@@ -50,7 +50,6 @@ linters-settings:
       - hugeParam
 
   revive:
-    min-confidence: 0.8
     rules:
       - name: var-naming
       - name: package-comments
