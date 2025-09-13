@@ -68,8 +68,31 @@ clean: ## Clean build artifacts and temporary files
 	rm -rf dist/ build/
 
 # Benchmarks
-bench: ## Run benchmarks
+bench: ## Run basic benchmarks
 	go test -bench=. -benchmem ./...
+
+bench-full: ## Run comprehensive benchmark analysis
+	@echo "Running comprehensive benchmark analysis..."
+	@./scripts/run_benchmarks.sh
+
+bench-compare: ## Run comparison benchmarks (gopantic vs standard library)
+	go test -bench="Benchmark(StdJSON|Gopantic)_(Simple|Complex)User$$" -benchmem -count=3 ./benchmarks
+
+bench-memory: ## Run memory allocation benchmarks
+	go test -bench="BenchmarkMemory" -benchmem -count=3 ./benchmarks
+
+bench-cache: ## Run cache performance benchmarks  
+	go test -bench="Benchmark.*_Cached$$|BenchmarkCache_" -benchmem -count=3 ./benchmarks
+
+bench-concurrent: ## Run concurrent processing benchmarks
+	go test -bench="BenchmarkConcurrent" -benchmem -count=3 -cpu=1,2,4 ./benchmarks
+
+bench-profile: ## Run benchmarks with CPU and memory profiling
+	@mkdir -p benchmark_results
+	go test -bench=. -benchmem -cpuprofile=benchmark_results/cpu.prof -memprofile=benchmark_results/mem.prof ./benchmarks
+	@echo "Profiles generated in benchmark_results/"
+	@echo "View CPU profile: go tool pprof benchmark_results/cpu.prof"
+	@echo "View memory profile: go tool pprof benchmark_results/mem.prof"
 
 # Examples
 examples: ## Run all examples

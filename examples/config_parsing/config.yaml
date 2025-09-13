@@ -1,0 +1,149 @@
+name: MyApplication
+version: 1.0.0
+environment: development
+debug: true
+
+server:
+  host: localhost
+  port: 3000
+  read_timeout: 30s
+  write_timeout: 30s
+  shutdown_timeout: 5s
+  max_header_bytes: 1048576
+  tls:
+    enabled: false
+    cert_file: ""
+    key_file: ""
+    min_version: "1.2"
+
+database:
+  driver: postgres
+  host: localhost
+  port: 5432
+  username: dev_user
+  password: dev_password123
+  database: myapp_development
+  max_open_conns: 10
+  max_idle_conns: 5
+  conn_max_lifetime: 300s
+  ssl_mode: disable
+  migrations:
+    enabled: true
+    directory: ./migrations
+    table: schema_migrations
+
+redis:
+  host: localhost
+  port: 6379
+  password: ""
+  db: 0
+  pool_size: 5
+  dial_timeout: 5s
+  read_timeout: 3s
+  cluster:
+    enabled: false
+    nodes: []
+
+logging:
+  level: debug
+  format: text
+  output: stdout
+  file: null
+  structured: false
+  fields:
+    service: myapp
+    version: 1.0.0
+    environment: development
+
+security:
+  jwt:
+    secret: dev-jwt-secret-key-for-development-only-32-chars
+    algorithm: HS256
+    expiration_time: 24h
+    refresh_time: 168h
+    issuer: myapp-dev
+    audience: myapp-dev-users
+  rate_limit:
+    enabled: false
+    requests: 1000
+    window: 1m
+    skip_paths: ["/health", "/metrics", "/debug"]
+  cors:
+    enabled: true
+    allowed_origins: ["http://localhost:3000", "http://localhost:8080"]
+    allowed_methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    allowed_headers: ["*"]
+    max_age: 86400
+  csp: ""
+  encryption:
+    key: dev-encryption-key-for-development-only-32-chars
+    algorithm: AES-256-GCM
+
+features:
+  enable_metrics: true
+  enable_tracing: false
+  enable_profiling: true
+  enable_swagger: true
+  enable_health_check: true
+  maintenance_mode: false
+
+services:
+  email_service:
+    enabled: false
+    url: ""
+    api_key: ""
+    timeout: 10s
+    retries: 1
+    circuit_breaker:
+      enabled: false
+      failure_threshold: 0
+      recovery_timeout: 0s
+      half_open_requests: 0
+  payment_service:
+    enabled: false
+    url: ""
+    api_key: ""
+    timeout: 15s
+    retries: 1
+    circuit_breaker:
+      enabled: false
+      failure_threshold: 0
+      recovery_timeout: 0s
+      half_open_requests: 0
+  storage_service:
+    enabled: false
+    url: ""
+    api_key: ""
+    timeout: 30s
+    retries: 1
+    circuit_breaker:
+      enabled: false
+      failure_threshold: 0
+      recovery_timeout: 0s
+      half_open_requests: 0
+  notification_service:
+    enabled: false
+    url: ""
+    api_key: ""
+    timeout: 5s
+    retries: 1
+    circuit_breaker:
+      enabled: false
+      failure_threshold: 0
+      recovery_timeout: 0s
+      half_open_requests: 0
+
+monitoring:
+  metrics:
+    enabled: true
+    endpoint: /metrics
+    namespace: myapp_dev
+    interval: 30s
+  tracing:
+    enabled: false
+    service_name: myapp-dev
+    endpoint: ""
+    sample_rate: 1.0
+  health:
+    enabled: true
+    endpoint: /health
