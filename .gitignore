@@ -27,9 +27,10 @@ go.work
 coverage/
 coverage.html
 
-# Profiling
+# Profiling and benchmarks
 *.prof
 *.pprof
+benchmark_results/
 
 # Logs
 *.log

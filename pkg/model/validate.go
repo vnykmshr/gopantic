@@ -351,7 +351,6 @@ func ParseValidationTags(structType reflect.Type) *StructValidation {
 		rules, err := parseValidationRules(validateTag)
 		if err != nil {
 			// Skip field with invalid validation syntax
-			// TODO: Consider logging this error
 			continue
 		}
 
@@ -416,7 +415,6 @@ func parseValidationRules(tag string) ([]ValidationRule, error) {
 			}
 			rules = append(rules, rule)
 		}
-		// TODO: Consider returning error for unknown validators
 	}
 
 	return rules, nil
