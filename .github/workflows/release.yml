@@ -51,6 +51,9 @@ jobs:
     - name: Download dependencies
       run: go mod download
 
+    - name: Install development tools
+      run: make install
+
     - name: Run full release validation
       run: make release
       env:
