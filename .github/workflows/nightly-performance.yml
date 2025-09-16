@@ -68,13 +68,13 @@ jobs:
         
         echo "## 🔧 Optimization Comparison" >> performance_report.md
         echo "\`\`\`" >> performance_report.md
-        go test -bench=BenchmarkOptimizationComparison -benchmem ./benchmarks >> performance_report.md 2>&1
+        go test -bench=BenchmarkTypeCoercion -benchmem ./tests >> performance_report.md 2>&1
         echo "\`\`\`" >> performance_report.md
         echo "" >> performance_report.md
-        
+
         echo "## 📈 Performance Metrics" >> performance_report.md
         echo "\`\`\`" >> performance_report.md
-        go test -bench=BenchmarkMemoryPressure -benchmem ./benchmarks >> performance_report.md 2>&1
+        go test -bench=BenchmarkMemoryAllocation -benchmem ./tests >> performance_report.md 2>&1
         echo "\`\`\`" >> performance_report.md
         echo "" >> performance_report.md
         
@@ -90,8 +90,8 @@ jobs:
         make bench-profile
         
         # Generate additional profiles for analysis
-        go test -bench=BenchmarkGopantic_ComplexUser -cpuprofile=performance_profiles/complex_cpu.prof -memprofile=performance_profiles/complex_mem.prof ./benchmarks
-        go test -bench=BenchmarkConcurrent -cpuprofile=performance_profiles/concurrent_cpu.prof -memprofile=performance_profiles/concurrent_mem.prof ./benchmarks
+        go test -bench=BenchmarkComplexParsing -cpuprofile=performance_profiles/complex_cpu.prof -memprofile=performance_profiles/complex_mem.prof ./tests
+        go test -bench=BenchmarkTypeCoercion -cpuprofile=performance_profiles/concurrent_cpu.prof -memprofile=performance_profiles/concurrent_mem.prof ./tests
 
     - name: Upload performance profiles
       uses: actions/upload-artifact@v4
@@ -115,7 +115,7 @@ jobs:
         fi
         
         # Save current benchmarks for next comparison
-        go test -bench=. -benchmem ./benchmarks > current_benchmarks.txt
+        go test -bench=. -benchmem ./tests > current_benchmarks.txt
 
     - name: Create performance issue on regression
       uses: actions/github-script@v7
