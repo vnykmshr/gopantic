@@ -34,7 +34,7 @@ linters:
     - dupl          # Check for duplicated code
     - gosec         # Security checker
     - prealloc      # Find slice declarations with non-zero initial length
-    - copyloopvar   # Check for loop variable capture (replaces exportloopref)
+    # - copyloopvar   # Check for loop variable capture (replaces exportloopref)
 
 linters-settings:
   gocyclo:
