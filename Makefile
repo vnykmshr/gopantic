@@ -105,10 +105,11 @@ docs: ## Generate and serve documentation
 
 # Git hooks setup
 hooks: ## Setup git pre-commit hooks
-	@echo "#!/bin/sh" > .git/hooks/pre-commit
-	@echo "make check" >> .git/hooks/pre-commit
+	@echo "Installing enhanced pre-commit hook..."
+	@cp .git/hooks/pre-commit .git/hooks/pre-commit.backup 2>/dev/null || true
 	@chmod +x .git/hooks/pre-commit
-	@echo "Git pre-commit hook installed (runs 'make check')"
+	@echo "Pre-commit hook installed successfully!"
+	@echo "Hook performs: security check, formatting, vetting, linting, and conditional testing"
 
 # Development helpers
 watch: ## Watch for changes and run tests

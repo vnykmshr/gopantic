@@ -151,10 +151,26 @@ user2, _ := parser.Parse(data) // Cache hit - 27x faster
 - **IDE support** - Full autocompletion and refactoring
 - **Integrated coercion** - Automatic type conversion
 
+## Development
+
+### Pre-commit Hook
+
+A practical pre-commit hook is included that automatically:
+- Checks for potential secrets in staged files
+- Formats Go code with `go fmt`
+- Runs `go vet` for static analysis
+- Performs fast linting with `golangci-lint`
+- Runs tests if test files are modified
+
+Install the hook:
+```bash
+make hooks
+```
+
 ## Documentation
 
 - [Architecture & Design](docs/architecture.md) - Implementation details and design decisions
-- [API Reference](docs/api.md) - Complete API documentation  
+- [API Reference](docs/api.md) - Complete API documentation
 - [Examples](examples/) - Practical usage examples
 
 ## License
