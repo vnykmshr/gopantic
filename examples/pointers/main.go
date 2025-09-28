@@ -36,7 +36,7 @@ type Profile struct {
 }
 
 func main() {
-	fmt.Println("🚀 Gopantic Pointer Types Example")
+	fmt.Println("Gopantic Pointer Types Example")
 	fmt.Println("=====================================")
 	fmt.Println()
 
@@ -133,7 +133,7 @@ func main() {
 
 	_, err = model.ParseInto[User](invalidUserJSON)
 	if err != nil {
-		fmt.Printf("✅ Expected validation error: %v\n", err)
+		fmt.Printf("Expected validation error: %v\n", err)
 	}
 
 	// Example 6: Type coercion with pointers
@@ -153,7 +153,7 @@ func main() {
 	if err != nil {
 		log.Printf("Error parsing coercion user: %v", err)
 	} else {
-		fmt.Println("✅ Successfully coerced types:")
+		fmt.Println("Successfully coerced types:")
 		printUser(userCoercion)
 	}
 }

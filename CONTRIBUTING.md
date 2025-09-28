@@ -53,11 +53,11 @@ Thank you for your interest in contributing to gopantic! This document provides 
 
 ### Coding Standards
 
-- **Go Code Style**: Follow standard Go formatting (`go fmt`)
-- **Linting**: All code must pass `golangci-lint run`
-- **Testing**: Maintain >90% test coverage for new code
-- **Documentation**: Add GoDoc comments for all public APIs
-- **Error Handling**: Proper error handling and meaningful error messages
+- **Go Code Style** - Follow standard Go formatting (`go fmt`)
+- **Linting** - All code must pass `golangci-lint run`
+- **Testing** - Maintain >90% test coverage for new code
+- **Documentation** - Add GoDoc comments for all public APIs
+- **Error Handling** - Proper error handling and meaningful error messages
 
 ### Commit Message Convention
 
@@ -200,10 +200,10 @@ Include the following information:
 
 ### Design Principles
 
-- **Idiomatic Go**: APIs should feel natural in Go
-- **Practical over perfect**: Focus on useful features over full parity with other libraries
-- **Performance conscious**: Avoid unnecessary allocations and reflection where possible
-- **Minimal dependencies**: Prefer standard library solutions
+- **Idiomatic Go** - APIs should feel natural in Go
+- **Practical over perfect** - Focus on useful features over full parity with other libraries
+- **Performance conscious** - Avoid unnecessary allocations and reflection where possible
+- **Minimal dependencies** - Prefer standard library solutions
 
 ### Code Organization
 

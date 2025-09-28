@@ -209,7 +209,7 @@ type HealthConfig struct {
 }
 
 func main() {
-	fmt.Println("🔧 Configuration Parsing Example")
+	fmt.Println("Configuration Parsing Example")
 	fmt.Println("This demonstrates real-world configuration parsing and validation using gopantic")
 	fmt.Println()
 
@@ -235,52 +235,52 @@ func main() {
 	}
 
 	for _, configInfo := range configs {
-		fmt.Printf("📄 Parsing %s (%s)\n", configInfo.name, configInfo.format)
+		fmt.Printf("Parsing %s (%s)\n", configInfo.name, configInfo.format)
 		fmt.Printf("   File: %s\n", configInfo.file)
 
 		filePath := filepath.Join(examplesDir, configInfo.file)
 
 		// Check if file exists
 		if _, err := os.Stat(filePath); os.IsNotExist(err) {
-			fmt.Printf("   ❌ File not found: %s\n", filePath)
+			fmt.Printf("   File not found: %s\n", filePath)
 
 			// Create sample file for demonstration
 			if err := createSampleConfig(filePath, configInfo.format); err != nil {
-				fmt.Printf("   ❌ Failed to create sample file: %v\n", err)
+				fmt.Printf("   Failed to create sample file: %v\n", err)
 			} else {
-				fmt.Printf("   ✅ Created sample file: %s\n", filePath)
+				fmt.Printf("   Created sample file: %s\n", filePath)
 			}
 		}
 
 		// Parse the configuration
 		config, err := parseConfigFile(filePath)
 		if err != nil {
-			fmt.Printf("   ❌ Parsing failed: %v\n", err)
+			fmt.Printf("   Parsing failed: %v\n", err)
 
 			// If it's a validation error, show structured details
 			if errorList, ok := err.(model.ErrorList); ok {
 				if jsonData, jsonErr := errorList.ToJSON(); jsonErr == nil {
-					fmt.Printf("   📋 Validation Errors:\n")
+					fmt.Printf("   Validation Errors:\n")
 					fmt.Printf("   %s\n", string(jsonData))
 				}
 			}
 		} else {
-			fmt.Printf("   ✅ Configuration parsed successfully\n")
-			fmt.Printf("   📊 App: %s v%s (%s)\n", config.Name, config.Version, config.Environment)
-			fmt.Printf("   🚀 Server: %s:%d\n", config.Server.Host, config.Server.Port)
-			fmt.Printf("   🗃️  Database: %s@%s:%d/%s\n", config.Database.Username, config.Database.Host, config.Database.Port, config.Database.Database)
-			fmt.Printf("   🔄 Redis: %s:%d (DB %d)\n", config.Redis.Host, config.Redis.Port, config.Redis.DB)
-			fmt.Printf("   📝 Logging: %s level, %s format\n", config.Logging.Level, config.Logging.Format)
+			fmt.Printf("   Configuration parsed successfully\n")
+			fmt.Printf("   App: %s v%s (%s)\n", config.Name, config.Version, config.Environment)
+			fmt.Printf("   Server: %s:%d\n", config.Server.Host, config.Server.Port)
+			fmt.Printf("   Database: %s@%s:%d/%s\n", config.Database.Username, config.Database.Host, config.Database.Port, config.Database.Database)
+			fmt.Printf("   Redis: %s:%d (DB %d)\n", config.Redis.Host, config.Redis.Port, config.Redis.DB)
+			fmt.Printf("   Logging: %s level, %s format\n", config.Logging.Level, config.Logging.Format)
 		}
 		fmt.Println()
 	}
 
 	// Demonstrate configuration validation scenarios
-	fmt.Println("🔍 Configuration Validation Scenarios")
+	fmt.Println("Configuration Validation Scenarios")
 	demonstrateValidationScenarios()
 
 	// Show environment variable override example
-	fmt.Println("\n🌍 Environment Variable Override Example")
+	fmt.Println("\nEnvironment Variable Override Example")
 	demonstrateEnvironmentOverrides()
 }
 
@@ -696,13 +696,13 @@ database:
 	}
 
 	for _, scenario := range scenarios {
-		fmt.Printf("   🧪 %s (%s)\n", scenario.name, scenario.format)
+		fmt.Printf("   %s (%s)\n", scenario.name, scenario.format)
 
 		_, err := model.ParseInto[ApplicationConfig]([]byte(scenario.config))
 		if err != nil {
-			fmt.Printf("      ❌ Validation failed (expected): %v\n", err)
+			fmt.Printf("      Validation failed (expected): %v\n", err)
 		} else {
-			fmt.Printf("      ✅ Validation passed (unexpected)\n")
+			fmt.Printf("      Validation passed (unexpected)\n")
 		}
 	}
 }
@@ -731,7 +731,7 @@ func demonstrateEnvironmentOverrides() {
 		}
 	}`
 
-	fmt.Printf("\n📄 Base configuration:\n")
+	fmt.Printf("\nBase configuration:\n")
 
 	// Parse as raw JSON first (no struct validation)
 	var config map[string]interface{}
@@ -744,14 +744,14 @@ func demonstrateEnvironmentOverrides() {
 	if serverConfig, ok := config["server"].(map[string]interface{}); ok {
 		if port := os.Getenv("SERVER_PORT"); port != "" {
 			serverConfig["port"] = port
-			fmt.Printf("   🔄 SERVER_PORT override: %s\n", port)
+			fmt.Printf("   SERVER_PORT override: %s\n", port)
 		}
 	}
 
 	if debug := os.Getenv("DEBUG"); debug != "" {
 		config["debug"] = strings.ToLower(debug) == "true"
-		fmt.Printf("   🔄 DEBUG override: %s\n", debug)
+		fmt.Printf("   DEBUG override: %s\n", debug)
 	}
 
-	fmt.Printf("   ✅ Configuration with overrides ready for final validation\n")
+	fmt.Printf("   Configuration with overrides ready for final validation\n")
 }

@@ -37,7 +37,7 @@ type APIKey struct {
 }
 
 func main() {
-	fmt.Println("🔒 gopantic - Validation Framework Examples")
+	fmt.Println("gopantic - Validation Framework Examples")
 	fmt.Println("============================================")
 
 	// Example 1: Valid user registration
@@ -55,9 +55,9 @@ func main() {
 
 	user, err := model.ParseInto[UserRegistration]([]byte(validUserJSON))
 	if err != nil {
-		fmt.Printf("❌ Validation failed: %v\n", err)
+		fmt.Printf("Validation failed: %v\n", err)
 	} else {
-		fmt.Printf("✅ User registered successfully: %s (%s)\n", user.Username, user.Email)
+		fmt.Printf("User registered successfully: %s (%s)\n", user.Username, user.Email)
 		fmt.Printf("   Full Name: %s, Age: %d\n", user.FullName, user.Age)
 		fmt.Printf("   Bio: %q\n", user.Bio)
 		fmt.Printf("   Terms Accepted: %t\n", user.Terms)
@@ -78,9 +78,9 @@ func main() {
 
 	_, err = model.ParseInto[UserRegistration]([]byte(invalidUserJSON))
 	if err != nil {
-		fmt.Printf("❌ Expected validation errors:\n%v\n", err)
+		fmt.Printf("Expected validation errors:\n%v\n", err)
 	} else {
-		fmt.Println("❌ Expected validation to fail!")
+		fmt.Println("Expected validation to fail!")
 	}
 
 	// Example 3: Valid product
@@ -96,9 +96,9 @@ func main() {
 
 	product, err := model.ParseInto[Product]([]byte(validProductJSON))
 	if err != nil {
-		fmt.Printf("❌ Product validation failed: %v\n", err)
+		fmt.Printf("Product validation failed: %v\n", err)
 	} else {
-		fmt.Printf("✅ Product created: %s - %s\n", product.SKU, product.Name)
+		fmt.Printf("Product created: %s - %s\n", product.SKU, product.Name)
 		fmt.Printf("   Price: $%.2f, Category: %s\n", product.Price, product.Category)
 		fmt.Printf("   In Stock: %t\n", product.InStock)
 	}
@@ -115,9 +115,9 @@ func main() {
 
 	_, err = model.ParseInto[Product]([]byte(invalidProductJSON))
 	if err != nil {
-		fmt.Printf("❌ Expected product validation errors:\n%v\n", err)
+		fmt.Printf("Expected product validation errors:\n%v\n", err)
 	} else {
-		fmt.Println("❌ Expected product validation to fail!")
+		fmt.Println("Expected product validation to fail!")
 	}
 
 	// Example 5: API Key validation
@@ -131,9 +131,9 @@ func main() {
 
 	apiKey, err := model.ParseInto[APIKey]([]byte(validAPIKeyJSON))
 	if err != nil {
-		fmt.Printf("❌ API Key validation failed: %v\n", err)
+		fmt.Printf("API Key validation failed: %v\n", err)
 	} else {
-		fmt.Printf("✅ API Key created: %s\n", apiKey.Name)
+		fmt.Printf("API Key created: %s\n", apiKey.Name)
 		fmt.Printf("   Key: %s...\n", apiKey.Key[:8])
 		fmt.Printf("   Permissions: %s, Active: %t\n", apiKey.Permissions, apiKey.Active)
 	}
@@ -153,9 +153,9 @@ func main() {
 
 	coercedUser, err := model.ParseInto[UserRegistration]([]byte(coercionJSON))
 	if err != nil {
-		fmt.Printf("❌ Coercion with validation failed: %v\n", err)
+		fmt.Printf("Coercion with validation failed: %v\n", err)
 	} else {
-		fmt.Printf("✅ User with coerced types: %s\n", coercedUser.Username)
+		fmt.Printf("User with coerced types: %s\n", coercedUser.Username)
 		fmt.Printf("   Age (string->int): %d\n", coercedUser.Age)
 		fmt.Printf("   Terms (string->bool): %t\n", coercedUser.Terms)
 	}
@@ -179,7 +179,7 @@ func main() {
 	fmt.Println("\n   Alpha/Alphanumeric Validation:")
 	testAlphaValidation()
 
-	fmt.Println("\n✨ All validation examples completed!")
+	fmt.Println("\nAll validation examples completed!")
 	fmt.Println("gopantic successfully demonstrated comprehensive validation capabilities!")
 }
 
@@ -197,9 +197,9 @@ func testRequiredValidation() {
 	for _, test := range tests {
 		_, err := model.ParseInto[RequiredTest]([]byte(test))
 		if err != nil {
-			fmt.Printf("     %s → ❌ %v\n", test, err)
+			fmt.Printf("     %s -> %v\n", test, err)
 		} else {
-			fmt.Printf("     %s → ✅ Valid\n", test)
+			fmt.Printf("     %s -> Valid\n", test)
 		}
 	}
 }
@@ -219,9 +219,9 @@ func testMinMaxValidation() {
 	for _, test := range tests {
 		_, err := model.ParseInto[LengthTest]([]byte(test))
 		if err != nil {
-			fmt.Printf("     %s → ❌ %v\n", test, err)
+			fmt.Printf("     %s -> %v\n", test, err)
 		} else {
-			fmt.Printf("     %s → ✅ Valid\n", test)
+			fmt.Printf("     %s -> Valid\n", test)
 		}
 	}
 }
@@ -242,9 +242,9 @@ func testEmailValidation() {
 	for _, test := range tests {
 		_, err := model.ParseInto[EmailTest]([]byte(test))
 		if err != nil {
-			fmt.Printf("     %s → ❌ Invalid email\n", test)
+			fmt.Printf("     %s -> Invalid email\n", test)
 		} else {
-			fmt.Printf("     %s → ✅ Valid email\n", test)
+			fmt.Printf("     %s -> Valid email\n", test)
 		}
 	}
 }
@@ -264,9 +264,9 @@ func testAlphaValidation() {
 	for _, test := range tests {
 		_, err := model.ParseInto[AlphaTest]([]byte(test))
 		if err != nil {
-			fmt.Printf("     %s → ❌ %v\n", test, err)
+			fmt.Printf("     %s -> %v\n", test, err)
 		} else {
-			fmt.Printf("     %s → ✅ Valid\n", test)
+			fmt.Printf("     %s -> Valid\n", test)
 		}
 	}
 }

@@ -12,14 +12,14 @@ func ParseInto[T any](data []byte) (T, error)
 
 Parses JSON or YAML data into a struct with automatic format detection.
 
-**Parameters:**
-- `data []byte`: Raw JSON or YAML data
+Parameters:
+- `data []byte` - Raw JSON or YAML data
 
-**Returns:**
-- `T`: Parsed struct of type T
-- `error`: Parse, coercion, or validation errors
+Returns:
+- `T` - Parsed struct of type T
+- `error` - Parse, coercion, or validation errors
 
-**Example:**
+Example:
 ```go
 type User struct {
     ID   int    `json:"id"`
@@ -37,15 +37,15 @@ func ParseIntoWithFormat[T any](data []byte, format Format) (T, error)
 
 Parses data with explicit format specification.
 
-**Parameters:**
-- `data []byte`: Raw data
-- `format Format`: `FormatJSON` or `FormatYAML`
+Parameters:
+- `data []byte` - Raw data
+- `format Format` - `FormatJSON` or `FormatYAML`
 
-**Returns:**
-- `T`: Parsed struct of type T
-- `error`: Parse, coercion, or validation errors
+Returns:
+- `T` - Parsed struct of type T
+- `error` - Parse, coercion, or validation errors
 
-**Example:**
+Example:
 ```go
 user, err := model.ParseIntoWithFormat[User](yamlData, model.FormatYAML)
 ```
@@ -60,13 +60,13 @@ func DetectFormat(data []byte) Format
 
 Automatically detects data format.
 
-**Parameters:**
-- `data []byte`: Raw data
+Parameters:
+- `data []byte` - Raw data
 
-**Returns:**
-- `Format`: Detected format (`FormatJSON` or `FormatYAML`)
+Returns:
+- `Format` - Detected format (`FormatJSON` or `FormatYAML`)
 
-**Algorithm:**
+Algorithm:
 - Looks for JSON markers (`{`, `[`)
 - Looks for YAML markers (`---`, `:`)
 - Defaults to JSON for ambiguous cases
@@ -81,14 +81,14 @@ func NewCachedParser[T any](config *CacheConfig) (*CachedParser[T], error)
 
 Creates a new cached parser instance.
 
-**Parameters:**
-- `config *CacheConfig`: Cache configuration (nil for defaults)
+Parameters:
+- `config *CacheConfig` - Cache configuration (nil for defaults)
 
-**Returns:**
-- `*CachedParser[T]`: Parser instance with caching
-- `error`: Configuration validation errors
+Returns:
+- `*CachedParser[T]` - Parser instance with caching
+- `error` - Configuration validation errors
 
-**Example:**
+Example:
 ```go
 config := &model.CacheConfig{
     TTL:        5 * time.Minute,
@@ -107,12 +107,12 @@ func (cp *CachedParser[T]) Parse(data []byte) (T, error)
 
 Parses data with caching support.
 
-**Parameters:**
-- `data []byte`: Raw data
+Parameters:
+- `data []byte` - Raw data
 
-**Returns:**
-- `T`: Parsed struct (from cache or fresh parse)
-- `error`: Parse, coercion, or validation errors
+Returns:
+- `T` - Parsed struct (from cache or fresh parse)
+- `error` - Parse, coercion, or validation errors
 
 ### CachedParser.Stats
 
@@ -122,10 +122,10 @@ func (cp *CachedParser[T]) Stats() (size, maxSize int, hitRate float64)
 
 Returns cache statistics.
 
-**Returns:**
-- `size int`: Current cache entries
-- `maxSize int`: Maximum cache entries
-- `hitRate float64`: Cache hit rate percentage
+Returns:
+- `size int` - Current cache entries
+- `maxSize int` - Maximum cache entries
+- `hitRate float64` - Cache hit rate percentage
 
 ### CachedParser.ClearCache
 
@@ -155,7 +155,7 @@ type CacheConfig struct {
 }
 ```
 
-**Default Values:**
+Default Values:
 - TTL: 30 minutes
 - MaxEntries: 1000
 - Namespace: "gopantic"
@@ -170,8 +170,8 @@ type CacheConfig struct {
 
 Field must have a non-zero value.
 
-**Applies to:** All types
-**Error:** "field is required"
+Applies to: All types
+Error: "field is required"
 
 ### Min/Max (Numbers)
 
@@ -183,8 +183,8 @@ Field must have a non-zero value.
 
 Numeric value constraints.
 
-**Applies to:** `int`, `float64`, and variants
-**Error:** "value must be at least N" / "value must be at most N"
+Applies to: `int`, `float64`, and variants
+Error: "value must be at least N" / "value must be at most N"
 
 ### Min/Max (Strings/Slices)
 
@@ -195,8 +195,8 @@ Numeric value constraints.
 
 Length constraints for strings and slices.
 
-**Applies to:** `string`, `[]T`
-**Error:** "length must be at least N" / "length must be at most N"
+Applies to: `string`, `[]T`
+Error: "length must be at least N" / "length must be at most N"
 
 ### Length
 
@@ -206,8 +206,8 @@ Length constraints for strings and slices.
 
 Exact length requirement.
 
-**Applies to:** `string`, `[]T`
-**Error:** "length must be exactly N characters"
+Applies to: `string`, `[]T`
+Error: "length must be exactly N characters"
 
 ### Email
 
@@ -217,8 +217,8 @@ Exact length requirement.
 
 Valid email format validation.
 
-**Applies to:** `string`
-**Error:** "must be a valid email address"
+Applies to: `string`
+Error: "must be a valid email address"
 
 ### Alpha
 
@@ -228,8 +228,8 @@ Valid email format validation.
 
 Alphabetic characters only (a-z, A-Z).
 
-**Applies to:** `string`
-**Error:** "must contain only alphabetic characters"
+Applies to: `string`
+Error: "must contain only alphabetic characters"
 
 ### Alphanum
 
@@ -239,8 +239,8 @@ Alphabetic characters only (a-z, A-Z).
 
 Alphanumeric characters only (a-z, A-Z, 0-9).
 
-**Applies to:** `string`
-**Error:** "must contain only alphanumeric characters"
+Applies to: `string`
+Error: "must contain only alphanumeric characters"
 
 ### Combined Rules
 
@@ -266,17 +266,17 @@ gopantic automatically converts between compatible types:
 
 ### Boolean Coercion
 
-**Truthy values:** `"true"`, `"yes"`, `"1"`, `"on"`, `1`, non-zero numbers
-**Falsy values:** `"false"`, `"no"`, `"0"`, `"off"`, `""`, `0`, zero values
+Truthy values: `"true"`, `"yes"`, `"1"`, `"on"`, `1`, non-zero numbers
+Falsy values: `"false"`, `"no"`, `"0"`, `"off"`, `""`, `0`, zero values
 
 ### Time Parsing
 
 Supports multiple time formats:
-- **RFC3339:** `"2023-01-15T10:30:00Z"`
-- **RFC3339Nano:** `"2023-01-15T10:30:00.123456789Z"`
-- **Date only:** `"2023-01-15"`
-- **Unix timestamp:** `1673781000` (integer)
-- **Unix timestamp:** `1673781000.123` (float)
+- **RFC3339** - `"2023-01-15T10:30:00Z"`
+- **RFC3339Nano** - `"2023-01-15T10:30:00.123456789Z"`
+- **Date only** - `"2023-01-15"`
+- **Unix timestamp** - `1673781000` (integer)
+- **Unix timestamp** - `1673781000.123` (float)
 
 ## Error Types
 

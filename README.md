@@ -45,18 +45,18 @@ func main() {
 
 ## Features
 
-- **🔄 JSON/YAML parsing** with automatic format detection
-- **⚡ Type coercion** (`"123"` → `123`, `"true"` → `true`) 
-- **✅ Validation** using struct tags (`validate:"required,email,min=5"`)
-- **🔗 Cross-field validation** (password confirmation, field comparisons)
-- **🏗️ Built-in validators**: `required`, `min`, `max`, `email`, `alpha`, `alphanum`, `length`
-- **📦 Nested structs** and arrays with full validation
-- **⏰ Time parsing** (RFC3339, Unix timestamps, custom formats)
-- **🎯 Pointer support** for optional fields (`*string`, `*int`)
-- **🚀 High-performance caching** (5-27x speedup)
-- **🔒 Thread-safe** concurrent parsing
-- **🧩 Zero dependencies** (except optional YAML support)
-- **🎨 Generics support** for type-safe parsing
+- **JSON/YAML parsing** with automatic format detection
+- **Type coercion** (`"123"` → `123`, `"true"` → `true`)
+- **Validation** using struct tags (`validate:"required,email,min=5"`)
+- **Cross-field validation** (password confirmation, field comparisons)
+- **Built-in validators**: `required`, `min`, `max`, `email`, `alpha`, `alphanum`, `length`
+- **Nested structs** and arrays with full validation
+- **Time parsing** (RFC3339, Unix timestamps, custom formats)
+- **Pointer support** for optional fields (`*string`, `*int`)
+- **High-performance caching** (5-27x speedup)
+- **Thread-safe** concurrent parsing
+- **Zero dependencies** (except optional YAML support)
+- **Generics support** for type-safe parsing
 
 ## YAML Support
 
@@ -124,32 +124,32 @@ user2, _ := parser.Parse(data) // Cache hit - 27x faster
 ## Why Choose gopantic?
 
 ### vs. Standard Library (`encoding/json`)
-- ✅ **Built-in validation** - No separate validation step needed
-- ✅ **Type coercion** - Handles `"123"` → `123` automatically  
-- ✅ **Better errors** - Structured error reporting with field paths
-- ✅ **YAML support** - Automatic format detection
-- ✅ **Cross-field validation** - Compare fields against each other
+- **Built-in validation** - No separate validation step needed
+- **Type coercion** - Handles `"123"` → `123` automatically
+- **Better errors** - Structured error reporting with field paths
+- **YAML support** - Automatic format detection
+- **Cross-field validation** - Compare fields against each other
 
 ### vs. Validation Libraries (`go-playground/validator`)
-- ✅ **Integrated parsing** - Parse and validate in one step
-- ✅ **Type coercion** - No manual string conversion needed
-- ✅ **Format agnostic** - Works with JSON and YAML seamlessly
-- ✅ **Generics support** - Type-safe with `ParseInto[T]()`
-- ✅ **Performance** - Built-in caching for repeated operations
+- **Integrated parsing** - Parse and validate in one step
+- **Type coercion** - No manual string conversion needed
+- **Format agnostic** - Works with JSON and YAML seamlessly
+- **Generics support** - Type-safe with `ParseInto[T]()`
+- **Performance** - Built-in caching for repeated operations
 
 ### vs. Code Generation (`easyjson`, `ffjson`)
-- ✅ **Zero code generation** - No build step or generated files
-- ✅ **Dynamic validation** - Runtime validation rule changes
-- ✅ **Simpler workflow** - Standard Go development process
-- ✅ **Faster iteration** - No regeneration on struct changes
-- ✅ **Cross-field validation** - Complex validation logic support
+- **Zero code generation** - No build step or generated files
+- **Dynamic validation** - Runtime validation rule changes
+- **Simpler workflow** - Standard Go development process
+- **Faster iteration** - No regeneration on struct changes
+- **Cross-field validation** - Complex validation logic support
 
 ### vs. Schema Libraries (`jsonschema`, `gojsonschema`)
-- ✅ **Native Go structs** - Use existing struct definitions
-- ✅ **Compile-time safety** - Type checking at compile time
-- ✅ **Better performance** - Direct struct mapping vs. schema validation
-- ✅ **IDE support** - Full autocompletion and refactoring
-- ✅ **Integrated coercion** - Automatic type conversion
+- **Native Go structs** - Use existing struct definitions
+- **Compile-time safety** - Type checking at compile time
+- **Better performance** - Direct struct mapping vs. schema validation
+- **IDE support** - Full autocompletion and refactoring
+- **Integrated coercion** - Automatic type conversion
 
 ## Documentation
 

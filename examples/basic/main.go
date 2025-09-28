@@ -33,7 +33,7 @@ type Config struct {
 }
 
 func main() {
-	fmt.Println("🚀 gopantic - Basic Parsing Examples")
+	fmt.Println("gopantic - Basic Parsing Examples")
 	fmt.Println("=====================================")
 
 	// Example 1: Basic User parsing with type coercion
@@ -108,7 +108,7 @@ func main() {
 	_, err = model.ParseInto[User]([]byte(invalidJSON))
 	if err != nil {
 		fmt.Printf("Expected error: %v\n", err)
-		fmt.Println("✓ gopantic correctly caught the invalid type conversion")
+		fmt.Println("gopantic correctly caught the invalid type conversion")
 	}
 
 	// Example 6: Demonstrating various boolean coercions
@@ -137,6 +137,6 @@ func main() {
 		}
 	}
 
-	fmt.Println("\n✨ All examples completed!")
+	fmt.Println("\nAll examples completed!")
 	fmt.Println("gopantic successfully parsed and coerced all the different data types!")
 }

@@ -1,6 +1,6 @@
 # Architecture & Design
 
-**gopantic** is designed for high-performance, type-safe parsing with minimal overhead. This document covers the core architecture, design decisions, and implementation details.
+gopantic is designed for high-performance, type-safe parsing with minimal overhead. This document covers the core architecture, design decisions, and implementation details.
 
 ## Core Architecture
 
@@ -22,10 +22,10 @@ pkg/model/
 
 ### Design Principles
 
-1. **Type Safety First**: Leverages Go generics for compile-time type safety
-2. **Zero-Cost Abstractions**: Optional features have no overhead when unused
-3. **Performance by Default**: Optimized for common use cases
-4. **Idiomatic Go**: Struct tags, interfaces, and familiar patterns
+1. **Type Safety First** - Leverages Go generics for compile-time type safety
+2. **Zero-Cost Abstractions** - Optional features have no overhead when unused
+3. **Performance by Default** - Optimized for common use cases
+4. **Idiomatic Go** - Struct tags, interfaces, and familiar patterns
 
 ## Parsing Engine
 
@@ -38,7 +38,7 @@ func ParseInto[T any](data []byte) (T, error)
 func ParseIntoWithFormat[T any](data []byte, format Format) (T, error)
 ```
 
-**Benefits:**
+Benefits:
 - Compile-time type checking
 - No runtime type assertions
 - Clean API without interface{} returns
@@ -60,9 +60,9 @@ const (
 )
 ```
 
-**Format Detection Algorithm:**
+Format Detection Algorithm:
 1. Check for JSON markers (`{`, `[`)
-2. Check for YAML markers (`---`, `:`)  
+2. Check for YAML markers (`---`, `:`)
 3. Default to JSON for ambiguous cases
 4. Performance: O(1) with early termination
 
@@ -89,9 +89,9 @@ Raw Data → Parse to map[string]any → Type Coercion → Struct → Validation
 
 ### Performance Optimization
 
-- **Reflection Caching**: Struct field information cached by type
-- **Fast Path Detection**: Skip coercion for matching types
-- **Minimal Allocations**: Reuse existing values when possible
+- **Reflection Caching** - Struct field information cached by type
+- **Fast Path Detection** - Skip coercion for matching types
+- **Minimal Allocations** - Reuse existing values when possible
 
 ## Validation Framework
 
@@ -178,7 +178,7 @@ Cache keys are generated using content hashing:
 key = fmt.Sprintf("%s:%s:%x", namespace, typeName, sha256(data))
 ```
 
-**Benefits:**
+Benefits:
 - Content integrity guaranteed
 - No key collisions
 - Format-aware caching (JSON vs YAML)
@@ -226,16 +226,16 @@ validation error on field "user.address.zip": length must be exactly 5 character
 
 ### Allocation Patterns
 
-- **Struct Reuse**: Target struct allocated once
-- **Slice Pre-allocation**: Collections sized by JSON array length
-- **String Interning**: Common field names reused
-- **Error Pooling**: Error objects reused in high-throughput scenarios
+- **Struct Reuse** - Target struct allocated once
+- **Slice Pre-allocation** - Collections sized by JSON array length
+- **String Interning** - Common field names reused
+- **Error Pooling** - Error objects reused in high-throughput scenarios
 
 ### GC Pressure
 
-- **Minimal Heap Allocations**: Most work done on stack
-- **No Intermediate Objects**: Direct parsing to target struct
-- **Cache-Friendly**: Sequential access patterns where possible
+- **Minimal Heap Allocations** - Most work done on stack
+- **No Intermediate Objects** - Direct parsing to target struct
+- **Cache-Friendly** - Sequential access patterns where possible
 
 ## Benchmarks & Performance
 
@@ -262,23 +262,23 @@ Caching provides substantial improvements for repeated parsing operations, makin
 
 All public APIs are thread-safe:
 
-- **ParseInto**: Stateless, fully concurrent
-- **CachedParser**: RWMutex for cache access
-- **Validators**: Stateless implementations
-- **Format Detection**: No shared state
+- **ParseInto** - Stateless, fully concurrent
+- **CachedParser** - RWMutex for cache access
+- **Validators** - Stateless implementations
+- **Format Detection** - No shared state
 
 ## Future Considerations
 
 ### Scalability
 
-- **Parser Pooling**: Reuse parser instances for high throughput
-- **Custom Allocators**: Memory pool for struct allocation
-- **SIMD Optimization**: Vectorized validation operations
+- **Parser Pooling** - Reuse parser instances for high throughput
+- **Custom Allocators** - Memory pool for struct allocation
+- **SIMD Optimization** - Vectorized validation operations
 
 ### Extensibility
 
-- **Plugin System**: Runtime validator registration
-- **Custom Formats**: Protocol buffer, MessagePack support
-- **Streaming API**: Large dataset processing
+- **Plugin System** - Runtime validator registration
+- **Custom Formats** - Protocol buffer, MessagePack support
+- **Streaming API** - Large dataset processing
 
 This architecture provides a solid foundation for high-performance parsing while maintaining Go's principles of simplicity and explicitness.

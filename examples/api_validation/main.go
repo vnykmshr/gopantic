@@ -59,7 +59,7 @@ var users []User
 var nextID = 1
 
 func main() {
-	fmt.Println("🚀 Starting API Validation Example Server")
+	fmt.Println("Starting API Validation Example Server")
 	fmt.Println("This demonstrates real-world API request validation using gopantic")
 
 	// Setup routes
@@ -69,7 +69,7 @@ func main() {
 	// Serve static demo page
 	http.HandleFunc("/", handleHome)
 
-	fmt.Println("\n📡 Server running on http://localhost:8080")
+	fmt.Println("\nServer running on http://localhost:8080")
 	fmt.Println("Try these endpoints:")
 	fmt.Println("  POST /users - Create a new user")
 	fmt.Println("  GET /users - List all users")
@@ -97,7 +97,7 @@ func handleHome(w http.ResponseWriter, r *http.Request) {
     </style>
 </head>
 <body>
-    <h1>🚀 Gopantic API Validation Demo</h1>
+    <h1>Gopantic API Validation Demo</h1>
     
     <h2>Available Endpoints</h2>
     

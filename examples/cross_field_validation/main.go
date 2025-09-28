@@ -174,7 +174,7 @@ func init() {
 }
 
 func main() {
-	fmt.Println("🔗 gopantic - Cross-Field Validation Examples")
+	fmt.Println("gopantic - Cross-Field Validation Examples")
 	fmt.Println("=============================================")
 
 	// Example 1: Valid user registration with cross-field validation
@@ -191,11 +191,11 @@ func main() {
 
 	user, err := model.ParseInto[UserRegistration]([]byte(validUserJSON))
 	if err != nil {
-		fmt.Printf("❌ Validation failed: %v\n", err)
+		fmt.Printf("Validation failed: %v\n", err)
 	} else {
-		fmt.Printf("✅ User registered successfully: %s (%s)\n", user.Username, user.Email)
+		fmt.Printf("User registered successfully: %s (%s)\n", user.Username, user.Email)
 		fmt.Printf("   Full Name: %s\n", user.FullName)
-		fmt.Printf("   Password confirmation: ✓ Matched\n")
+		fmt.Printf("   Password confirmation: Matched\n")
 	}
 
 	// Example 2: Invalid user registration - passwords don't match
@@ -212,7 +212,7 @@ func main() {
 
 	_, err = model.ParseInto[UserRegistration]([]byte(invalidPasswordJSON))
 	if err != nil {
-		fmt.Printf("❌ Expected validation error: %v\n", err)
+		fmt.Printf("Expected validation error: %v\n", err)
 	}
 
 	// Example 3: Invalid user registration - full name doesn't match
@@ -229,7 +229,7 @@ func main() {
 
 	_, err = model.ParseInto[UserRegistration]([]byte(invalidFullNameJSON))
 	if err != nil {
-		fmt.Printf("❌ Expected validation error: %v\n", err)
+		fmt.Printf("Expected validation error: %v\n", err)
 	}
 
 	// Example 4: Valid account settings update
@@ -244,12 +244,12 @@ func main() {
 
 	settings, err := model.ParseInto[AccountSettings]([]byte(validSettingsJSON))
 	if err != nil {
-		fmt.Printf("❌ Settings validation failed: %v\n", err)
+		fmt.Printf("Settings validation failed: %v\n", err)
 	} else {
-		fmt.Printf("✅ Account settings updated successfully\n")
+		fmt.Printf("Account settings updated successfully\n")
 		fmt.Printf("   Email: %s\n", settings.Email)
-		fmt.Printf("   Notification Email: %s ✓ Different\n", settings.NotificationEmail)
-		fmt.Printf("   Password: ✓ Changed and confirmed\n")
+		fmt.Printf("   Notification Email: %s Different\n", settings.NotificationEmail)
+		fmt.Printf("   Password: Changed and confirmed\n")
 	}
 
 	// Example 5: Invalid account settings - same emails
@@ -264,7 +264,7 @@ func main() {
 
 	_, err = model.ParseInto[AccountSettings]([]byte(sameEmailJSON))
 	if err != nil {
-		fmt.Printf("❌ Expected validation error: %v\n", err)
+		fmt.Printf("Expected validation error: %v\n", err)
 	}
 
 	// Example 6: Invalid account settings - same password
@@ -279,7 +279,7 @@ func main() {
 
 	_, err = model.ParseInto[AccountSettings]([]byte(samePasswordJSON))
 	if err != nil {
-		fmt.Printf("❌ Expected validation error: %v\n", err)
+		fmt.Printf("Expected validation error: %v\n", err)
 	}
 
 	// Example 7: Valid price range
@@ -291,9 +291,9 @@ func main() {
 
 	priceRange, err := model.ParseInto[PriceRange]([]byte(validPriceJSON))
 	if err != nil {
-		fmt.Printf("❌ Price validation failed: %v\n", err)
+		fmt.Printf("Price validation failed: %v\n", err)
 	} else {
-		fmt.Printf("✅ Price range valid: $%.2f - $%.2f\n", priceRange.MinPrice, priceRange.MaxPrice)
+		fmt.Printf("Price range valid: $%.2f - $%.2f\n", priceRange.MinPrice, priceRange.MaxPrice)
 	}
 
 	// Example 8: Invalid price range - max less than min
@@ -305,7 +305,7 @@ func main() {
 
 	_, err = model.ParseInto[PriceRange]([]byte(invalidPriceJSON))
 	if err != nil {
-		fmt.Printf("❌ Expected validation error: %v\n", err)
+		fmt.Printf("Expected validation error: %v\n", err)
 	}
 
 	// Example 9: Demonstrating optional cross-field validation
@@ -323,12 +323,12 @@ func main() {
 
 	optionalUser, err := model.ParseInto[UserRegistration]([]byte(optionalJSON))
 	if err != nil {
-		fmt.Printf("❌ Optional validation failed: %v\n", err)
+		fmt.Printf("Optional validation failed: %v\n", err)
 	} else {
-		fmt.Printf("✅ User registered without full name: %s\n", optionalUser.Username)
+		fmt.Printf("User registered without full name: %s\n", optionalUser.Username)
 		fmt.Printf("   Full Name: %q (empty, as expected)\n", optionalUser.FullName)
 	}
 
-	fmt.Println("\n✨ All cross-field validation examples completed!")
+	fmt.Println("\nAll cross-field validation examples completed!")
 	fmt.Println("gopantic successfully demonstrated advanced cross-field validation capabilities!")
 }

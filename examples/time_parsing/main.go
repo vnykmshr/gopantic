@@ -26,7 +26,7 @@ type LogEntry struct {
 }
 
 func main() {
-	fmt.Println("🕐 Time Parsing Examples with gopantic")
+	fmt.Println("Time Parsing Examples with gopantic")
 	fmt.Println("=====================================")
 
 	// Example 1: RFC3339 format (ISO 8601)
@@ -158,9 +158,9 @@ func main() {
 		fmt.Printf("Invalid format %d: ", i+1)
 		_, err := model.ParseInto[LogEntry]([]byte(invalidJSON))
 		if err != nil {
-			fmt.Printf("✓ Correctly rejected: %v\n", err)
+			fmt.Printf("Correctly rejected: %v\n", err)
 		} else {
-			fmt.Printf("✗ Unexpectedly accepted\n")
+			fmt.Printf("Unexpectedly accepted\n")
 		}
 	}
 
@@ -180,5 +180,5 @@ func main() {
 		fmt.Printf("  • %s\n", format)
 	}
 
-	fmt.Println("\n✨ Time parsing with gopantic makes handling various timestamp formats effortless!")
+	fmt.Println("\nTime parsing with gopantic makes handling various timestamp formats effortless!")
 }
