@@ -9,7 +9,7 @@ help: ## Show this help message
 check: deps fmt vet lint test ## Run full development cycle (deps, fmt, vet, lint, test)
 
 test: ## Run tests with coverage
-	go test -v -race -coverprofile=coverage.out ./...
+	go test -v -race -coverpkg=./pkg/... -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out -o coverage.html
 
 build: ## Build the library (check compilation)

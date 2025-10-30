@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 // Validator represents a validation rule that can be applied to a field.
@@ -234,6 +235,9 @@ func (r *ValidatorRegistry) Create(name string, params map[string]interface{}) V
 // Global validator registry instance
 var defaultRegistry = NewValidatorRegistry()
 
+// Global cache for validation metadata by type
+var validationCache sync.Map
+
 // GetDefaultRegistry returns the default global validator registry.
 // This registry contains all built-in validators and any custom validators
 // registered via RegisterGlobalFunc and RegisterGlobalCrossFieldFunc.
@@ -243,6 +247,9 @@ func GetDefaultRegistry() *ValidatorRegistry {
 
 // RegisterGlobalFunc is a convenience function to register a custom validation function
 // to the default global registry.
+//
+// Note: If you register custom validators after types have been parsed, you should call
+// ClearValidationCache() to ensure new validators are used for all subsequent parses.
 //
 // Example usage:
 //
@@ -273,6 +280,9 @@ func RegisterGlobalFunc(name string, validatorFunc ValidatorFunc) {
 // RegisterGlobalCrossFieldFunc is a convenience function to register a cross-field validation function
 // to the default global registry.
 //
+// Note: If you register custom validators after types have been parsed, you should call
+// ClearValidationCache() to ensure new validators are used for all subsequent parses.
+//
 // Example usage:
 //
 //	model.RegisterGlobalCrossFieldFunc("password_match", func(fieldName string, fieldValue interface{}, structValue reflect.Value, params map[string]interface{}) error {
@@ -295,6 +305,17 @@ func RegisterGlobalFunc(name string, validatorFunc ValidatorFunc) {
 //	})
 func RegisterGlobalCrossFieldFunc(name string, validatorFunc CrossFieldValidatorFunc) {
 	defaultRegistry.RegisterCrossFieldFunc(name, validatorFunc)
+}
+
+// ClearValidationCache clears the cached validation metadata for all types.
+// This is useful when you register new custom validators and want to ensure
+// they are applied to types that have already been parsed.
+// In normal operation, you should not need to call this function.
+func ClearValidationCache() {
+	validationCache.Range(func(key, value interface{}) bool {
+		validationCache.Delete(key)
+		return true
+	})
 }
 
 // ListValidators returns a list of all registered validator names (built-in, custom, and cross-field)
@@ -321,8 +342,25 @@ func (r *ValidatorRegistry) ListValidators() []string {
 
 // ParseValidationTags parses validation tags from a struct and returns validation info.
 // This function analyzes struct tags and builds the validation rules for efficient validation.
-// The returned StructValidation can be cached and reused for multiple validation operations.
+// The returned StructValidation is automatically cached by type for performance.
+// Subsequent calls with the same type will return the cached result.
 func ParseValidationTags(structType reflect.Type) *StructValidation {
+	// Check cache first
+	if cached, ok := validationCache.Load(structType); ok {
+		return cached.(*StructValidation)
+	}
+
+	// Parse validation tags
+	validation := parseValidationTagsUncached(structType)
+
+	// Store in cache
+	validationCache.Store(structType, validation)
+
+	return validation
+}
+
+// parseValidationTagsUncached performs the actual parsing without caching
+func parseValidationTagsUncached(structType reflect.Type) *StructValidation {
 	validation := &StructValidation{
 		Fields: make([]FieldValidation, 0),
 	}

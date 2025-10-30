@@ -89,9 +89,10 @@ Raw Data → Parse to map[string]any → Type Coercion → Struct → Validation
 
 ### Performance Optimization
 
-- **Reflection Caching** - Struct field information cached by type
+- **Validation Metadata Caching** - Struct validation rules cached by type (via sync.Map)
 - **Fast Path Detection** - Skip coercion for matching types
 - **Minimal Allocations** - Reuse existing values when possible
+- **Optimized Time Parsing** - Heuristic-based format selection for common cases
 
 ## Validation Framework
 
@@ -159,33 +160,48 @@ func (el ErrorList) AsError() error {
 
 ```go
 type CachedParser[T any] struct {
-    cache  map[string]cacheEntry
-    mu     sync.RWMutex
-    config *CacheConfig
+    cache       map[string]cacheEntry
+    mu          sync.RWMutex
+    config      *CacheConfig
+    hits        uint64 // Atomic counter
+    misses      uint64 // Atomic counter
+    stopCleanup chan struct{}
 }
 
-type cacheEntry struct {
-    value     T
-    createdAt time.Time
+type CacheConfig struct {
+    TTL             time.Duration // Entry lifetime (default: 1 hour)
+    MaxEntries      int           // LRU eviction limit (default: 1000)
+    CleanupInterval time.Duration // Background cleanup (default: 30 min)
 }
 ```
+
+**Features:**
+- **Hit Rate Tracking**: Atomic counters for cache hits/misses
+- **Proactive Cleanup**: Background goroutine removes expired entries
+- **LRU Eviction**: Oldest entries removed when MaxEntries reached
+- **Thread-Safe**: RWMutex for concurrent access
 
 ### Key Generation
 
-Cache keys are generated using content hashing:
+Cache keys are generated using content-based SHA256 hashing:
 
 ```
-key = fmt.Sprintf("%s:%s:%x", namespace, typeName, sha256(data))
+key = sha256(data)[:16] + ":" + reflect.TypeOf(T).String()
 ```
 
-Benefits:
-- Content integrity guaranteed
-- No key collisions
-- Format-aware caching (JSON vs YAML)
+**Benefits:**
+- Deterministic keys for identical content
+- Type-safe (different types don't collide)
+- Efficient 16-byte prefix
 
-### Performance Characteristics
+**Limitations:**
+- Even one byte difference invalidates cache
+- Best for truly identical inputs (config files, retries)
+- Limited benefit for unique API requests with varying data
 
-Real-world benchmarks show dramatic improvements:
+### Cache Effectiveness
+
+Benchmarks show significant speedups for **identical** inputs:
 
 | Scenario | Uncached | Cached | Speedup |
 |----------|----------|--------|---------|
@@ -193,6 +209,15 @@ Real-world benchmarks show dramatic improvements:
 | Complex JSON | 27.6μs | 2.6μs | 10.5x |
 | Simple YAML | 20.8μs | 1.5μs | 13.7x |
 | Complex YAML | 69.4μs | 2.6μs | 27.2x |
+
+**When to use caching:**
+- ✅ Parsing static configuration files repeatedly
+- ✅ Retrying identical failed requests
+- ✅ Processing duplicate messages in queues
+- ❌ Parsing unique API requests (same schema, different data)
+- ❌ Streaming different records from a file
+
+**Monitoring:** Use `Stats()` to check hit rate and adjust strategy accordingly.
 
 ## Error Handling
 

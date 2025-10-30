@@ -304,19 +304,34 @@ func coerceToTime(value interface{}, fieldName string) (time.Time, error) {
 	}
 }
 
-// parseTimeFromString attempts to parse time from string using multiple formats
+// parseTimeFromString attempts to parse time from string using multiple formats.
+// Formats are ordered by likelihood: RFC3339 variants first (most common in APIs),
+// then ISO 8601, then common date/time formats.
 func parseTimeFromString(s, fieldName string) (time.Time, error) {
-	formats := []string{
-		time.RFC3339,           // "2006-01-02T15:04:05Z07:00"
-		time.RFC3339Nano,       // "2006-01-02T15:04:05.999999999Z07:00"
-		"2006-01-02T15:04:05Z", // ISO 8601 UTC
-		"2006-01-02T15:04:05",  // ISO 8601 without timezone
-		"2006-01-02 15:04:05",  // Common format
-		"2006-01-02",           // Date only
-		"15:04:05",             // Time only (today's date)
+	// Quick heuristic: if string has 'T' at position 10, likely ISO 8601/RFC3339
+	// Try those formats first for better performance
+	if len(s) > 10 && s[10] == 'T' {
+		formats := []string{
+			time.RFC3339,           // "2006-01-02T15:04:05Z07:00" - most common
+			time.RFC3339Nano,       // "2006-01-02T15:04:05.999999999Z07:00"
+			"2006-01-02T15:04:05Z", // ISO 8601 UTC
+			"2006-01-02T15:04:05",  // ISO 8601 without timezone
+		}
+		for _, format := range formats {
+			if t, err := time.Parse(format, s); err == nil {
+				return t, nil
+			}
+		}
 	}
 
-	for _, format := range formats {
+	// Try remaining formats
+	otherFormats := []string{
+		"2006-01-02 15:04:05", // Common format with space
+		"2006-01-02",          // Date only
+		"15:04:05",            // Time only (today's date)
+	}
+
+	for _, format := range otherFormats {
 		if t, err := time.Parse(format, s); err == nil {
 			return t, nil
 		}

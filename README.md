@@ -53,10 +53,10 @@ func main() {
 - **Nested structs** and arrays with full validation
 - **Time parsing** (RFC3339, Unix timestamps, custom formats)
 - **Pointer support** for optional fields (`*string`, `*int`)
-- **High-performance caching** (5-27x speedup)
+- **Caching support** for repeated identical inputs (optional)
 - **Thread-safe** concurrent parsing
 - **Zero dependencies** (except optional YAML support)
-- **Generics support** for type-safe parsing
+- **Generic API** for type-safe parsing with compile-time guarantees
 
 ## YAML Support
 
@@ -111,15 +111,22 @@ model.RegisterGlobalCrossFieldFunc("password_match", func(fieldName string, fiel
 
 ## Performance
 
-High-performance caching for repeated parsing:
+High-performance caching for repeated parsing of **identical** inputs:
 
 ```go
-parser := model.NewCachedParser[User](nil) // Simple in-memory cache
-defer parser.Close()
+parser := model.NewCachedParser[User](nil)
+defer parser.Close() // Stop background cleanup
 
-user1, _ := parser.Parse(data) // Cache miss
-user2, _ := parser.Parse(data) // Cache hit - 27x faster
+user1, _ := parser.Parse(data) // Cache miss - full parse
+user2, _ := parser.Parse(data) // Cache hit - 5-27x faster for identical data
 ```
+
+**Cache effectiveness depends on use case:**
+- **Best for**: Parsing static config files, retrying identical requests
+- **Limited benefit**: Parsing unique API requests (same structure, different data)
+- Cache keys are SHA256-based; even one byte difference = cache miss
+
+For most API services parsing unique requests, the uncached `ParseInto` is recommended.
 
 ## Why Choose gopantic?
 
@@ -169,9 +176,11 @@ make hooks
 
 ## Documentation
 
+- [API Reference](docs/api.md) - Complete API documentation with examples
+- [Migration Guide](docs/migration.md) - Migrating from encoding/json, validator, etc.
 - [Architecture & Design](docs/architecture.md) - Implementation details and design decisions
-- [API Reference](docs/api.md) - Complete API documentation
 - [Examples](examples/) - Practical usage examples
+- [Security Policy](SECURITY.md) - Vulnerability reporting and security considerations
 
 ## License
 

@@ -5,20 +5,23 @@ import (
 	"encoding/hex"
 	"reflect"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
 // CacheConfig holds basic cache configuration
 type CacheConfig struct {
-	TTL        time.Duration // Time to live for cached entries (default: 1 hour)
-	MaxEntries int           // Maximum number of cached entries (default: 1000)
+	TTL             time.Duration // Time to live for cached entries (default: 1 hour)
+	MaxEntries      int           // Maximum number of cached entries (default: 1000)
+	CleanupInterval time.Duration // How often to run cleanup (default: TTL/2, 0 to disable)
 }
 
 // DefaultCacheConfig returns sensible defaults for in-memory caching
 func DefaultCacheConfig() *CacheConfig {
 	return &CacheConfig{
-		TTL:        time.Hour,
-		MaxEntries: 1000,
+		TTL:             time.Hour,
+		MaxEntries:      1000,
+		CleanupInterval: 30 * time.Minute, // Half of default TTL
 	}
 }
 
@@ -30,13 +33,18 @@ type cacheEntry struct {
 
 // CachedParser provides simple in-memory caching for parsing results
 type CachedParser[T any] struct {
-	cache     map[string]cacheEntry
-	mu        sync.RWMutex
-	config    *CacheConfig
-	keyPrefix string
+	cache       map[string]cacheEntry
+	mu          sync.RWMutex
+	config      *CacheConfig
+	keyPrefix   string
+	hits        uint64
+	misses      uint64
+	stopCleanup chan struct{}
 }
 
-// NewCachedParser creates a new cached parser with optional configuration
+// NewCachedParser creates a new cached parser with optional configuration.
+// If CleanupInterval > 0, a background goroutine will periodically clean expired entries.
+// Call Close() when done to stop the cleanup goroutine.
 func NewCachedParser[T any](config *CacheConfig) *CachedParser[T] {
 	if config == nil {
 		config = DefaultCacheConfig()
@@ -45,11 +53,19 @@ func NewCachedParser[T any](config *CacheConfig) *CachedParser[T] {
 	var zero T
 	keyPrefix := reflect.TypeOf(zero).String()
 
-	return &CachedParser[T]{
-		cache:     make(map[string]cacheEntry),
-		config:    config,
-		keyPrefix: keyPrefix,
+	cp := &CachedParser[T]{
+		cache:       make(map[string]cacheEntry),
+		config:      config,
+		keyPrefix:   keyPrefix,
+		stopCleanup: make(chan struct{}),
 	}
+
+	// Start cleanup goroutine if interval is configured
+	if config.CleanupInterval > 0 {
+		go cp.cleanupLoop()
+	}
+
+	return cp
 }
 
 // Parse parses data with caching support
@@ -80,28 +96,36 @@ func (cp *CachedParser[T]) ParseWithFormat(data []byte, format Format) (T, error
 // get retrieves a value from cache with TTL check
 func (cp *CachedParser[T]) get(key string) (T, bool) {
 	cp.mu.RLock()
-	defer cp.mu.RUnlock()
-
 	entry, exists := cp.cache[key]
+	cp.mu.RUnlock()
+
 	if !exists {
+		atomic.AddUint64(&cp.misses, 1)
 		var zero T
 		return zero, false
 	}
 
 	// Check TTL
 	if time.Since(entry.timestamp) > cp.config.TTL {
-		// Entry expired, clean up
+		// Entry expired, clean up with write lock
+		cp.mu.Lock()
 		delete(cp.cache, key)
+		cp.mu.Unlock()
+		atomic.AddUint64(&cp.misses, 1)
 		var zero T
 		return zero, false
 	}
 
 	if result, ok := entry.value.(T); ok {
+		atomic.AddUint64(&cp.hits, 1)
 		return result, true
 	}
 
-	// Invalid type, clean up
+	// Invalid type, clean up with write lock
+	cp.mu.Lock()
 	delete(cp.cache, key)
+	cp.mu.Unlock()
+	atomic.AddUint64(&cp.misses, 1)
 	var zero T
 	return zero, false
 }
@@ -153,12 +177,59 @@ func (cp *CachedParser[T]) ClearCache() {
 	cp.cache = make(map[string]cacheEntry)
 }
 
-// Stats returns cache statistics
+// Close stops the background cleanup goroutine if running.
+// After calling Close, the parser can still be used but expired entries
+// will only be cleaned up on access rather than proactively.
+func (cp *CachedParser[T]) Close() {
+	if cp.stopCleanup != nil {
+		close(cp.stopCleanup)
+	}
+}
+
+// cleanupLoop runs periodically to remove expired entries
+func (cp *CachedParser[T]) cleanupLoop() {
+	ticker := time.NewTicker(cp.config.CleanupInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			cp.cleanupExpired()
+		case <-cp.stopCleanup:
+			return
+		}
+	}
+}
+
+// cleanupExpired removes all expired entries from the cache
+func (cp *CachedParser[T]) cleanupExpired() {
+	cp.mu.Lock()
+	defer cp.mu.Unlock()
+
+	now := time.Now()
+	for key, entry := range cp.cache {
+		if now.Sub(entry.timestamp) > cp.config.TTL {
+			delete(cp.cache, key)
+		}
+	}
+}
+
+// Stats returns cache statistics including size, max size, and hit rate
 func (cp *CachedParser[T]) Stats() (size, maxSize int, hitRate float64) {
 	cp.mu.RLock()
-	defer cp.mu.RUnlock()
-	// Simple stats - could be enhanced if needed
-	return len(cp.cache), cp.config.MaxEntries, 0.0
+	size = len(cp.cache)
+	cp.mu.RUnlock()
+
+	hits := atomic.LoadUint64(&cp.hits)
+	misses := atomic.LoadUint64(&cp.misses)
+	total := hits + misses
+
+	if total == 0 {
+		return size, cp.config.MaxEntries, 0.0
+	}
+
+	hitRate = float64(hits) / float64(total)
+	return size, cp.config.MaxEntries, hitRate
 }
 
 // ParseIntoCached provides convenient cached parsing (falls back to non-cached for simplicity)

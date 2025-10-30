@@ -6,9 +6,17 @@ import (
 	"time"
 )
 
+// MaxInputSize is the default maximum size for input data (10MB).
+// Set to 0 to disable size checking. This prevents resource exhaustion
+// from maliciously large inputs.
+var MaxInputSize int = 10 * 1024 * 1024 // 10MB
+
 // ParseInto parses raw data into a struct of type T with automatic format detection, type coercion, and validation.
 // The format is automatically detected (JSON or YAML) based on the content structure.
 // This is the main entry point for parsing operations in gopantic.
+//
+// The function checks input size against MaxInputSize (default 10MB) to prevent resource exhaustion.
+// Set MaxInputSize to 0 to disable size checking.
 //
 // Example:
 //
@@ -22,6 +30,12 @@ import (
 //	    log.Fatal(err)
 //	}
 func ParseInto[T any](raw []byte) (T, error) {
+	// Check input size
+	var zero T
+	if MaxInputSize > 0 && len(raw) > MaxInputSize {
+		return zero, fmt.Errorf("input size %d bytes exceeds maximum allowed size %d bytes", len(raw), MaxInputSize)
+	}
+
 	// Auto-detect format and use appropriate parser
 	format := DetectFormat(raw)
 	return ParseIntoWithFormat[T](raw, format)
@@ -31,6 +45,9 @@ func ParseInto[T any](raw []byte) (T, error) {
 // Use this when you know the exact format or want to enforce a specific format.
 // Supports JSON and YAML formats.
 //
+// The function checks input size against MaxInputSize (default 10MB) to prevent resource exhaustion.
+// Set MaxInputSize to 0 to disable size checking.
+//
 // Example:
 //
 //	user, err := model.ParseIntoWithFormat[User](yamlData, model.FormatYAML)
@@ -39,6 +56,12 @@ func ParseInto[T any](raw []byte) (T, error) {
 //	}
 func ParseIntoWithFormat[T any](raw []byte, format Format) (T, error) {
 	var zero T
+
+	// Check input size
+	if MaxInputSize > 0 && len(raw) > MaxInputSize {
+		return zero, fmt.Errorf("input size %d bytes exceeds maximum allowed size %d bytes", len(raw), MaxInputSize)
+	}
+
 	var errors ErrorList
 
 	// Get the appropriate parser for the format

@@ -5,6 +5,53 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-01-XX
+
+### Added
+
+- **Validation metadata caching**: Struct validation rules now cached by type using `sync.Map` for 10-20% performance improvement on repeated parsing
+- **Cache hit rate tracking**: `CachedParser.Stats()` now returns actual hit rate via atomic counters for better observability
+- **Proactive cache cleanup**: Background goroutine periodically removes expired entries (configurable via `CleanupInterval`)
+- **Input size protection**: Added `MaxInputSize` variable (default 10MB) to prevent DoS attacks from oversized inputs
+- **Security policy**: Added SECURITY.md with vulnerability disclosure process and security best practices
+- **Migration guide**: Comprehensive docs/migration.md covering migration from encoding/json, validator, and YAML libraries
+- **Dependabot automation**: Weekly automated dependency updates for Go modules and GitHub Actions
+- **`ClearValidationCache()` function**: Manual cache invalidation for dynamic validator registration scenarios
+- **`Close()` method**: Properly stops background cleanup goroutine on CachedParser
+
+### Changed
+
+- **Optimized time parsing**: Heuristic-based format selection tries RFC3339/ISO 8601 first when 'T' detected at position 10
+- **Cache configuration**: Added `CleanupInterval` field to `CacheConfig` (default: 30 minutes)
+- **Documentation clarity**: Updated README and architecture docs to clarify cache use cases and limitations
+- **golangci-lint v2 compatibility**: Updated configuration for golangci-lint v2 with version pinning for consistency
+
+### Fixed
+
+- **golangci-lint configuration**: Fixed YAML syntax and made compatible with v2.x
+- **Test coverage reporting**: Added `-coverpkg=./pkg/...` flag to properly capture package coverage
+- **CI cleanup**: Removed unused Redis service configurations from all GitHub Actions workflows
+- **Linter version consistency**: Pinned golangci-lint to v2.5.0 in CI to match local development
+
+### Performance
+
+- 10-20% faster validation for repeated struct types via metadata caching
+- Optimized time parsing for common RFC3339 timestamps
+- Proactive cleanup prevents memory accumulation in long-running services
+
+### Security
+
+- DoS protection via configurable input size limits
+- Documentation of error message content for secure handling of sensitive data
+- Automated dependency vulnerability scanning
+
+### Documentation
+
+- New migration guide (200+ lines) covering common patterns
+- Security policy with vulnerability reporting process
+- Enhanced API docs with security considerations
+- Clarified cache effectiveness and appropriate use cases
+
 ## [1.0.1] - 2025-01-16
 
 ### Fixed

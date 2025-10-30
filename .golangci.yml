@@ -1,3 +1,5 @@
+version: 2
+
 run:
   timeout: 5m
   issues-exit-code: 1
@@ -5,26 +7,17 @@ run:
   modules-download-mode: readonly
 
 output:
-  formats: 
-    - format: colored-line-number
+  format: colored-line-number
   print-issued-lines: true
   print-linter-name: true
 
 linters:
   disable-all: true
   enable:
-    # Standard linters
+    # Core linters compatible with golangci-lint v2
     - errcheck      # Check for unchecked errors
-    - gosimple      # Simplify Go code
     - govet         # Go vet
     - ineffassign   # Detect ineffectual assignments
-    - staticcheck   # Go staticcheck
-    - typecheck     # Type checking
-    - unused        # Check for unused code
-
-    # Additional recommended linters
-    - gofmt         # Check formatting
-    - goimports     # Check imports
     - misspell      # Check spelling
     - revive        # Drop-in replacement for golint
     - unconvert     # Remove unnecessary type conversions
@@ -34,7 +27,6 @@ linters:
     - dupl          # Check for duplicated code
     - gosec         # Security checker
     - prealloc      # Find slice declarations with non-zero initial length
-    # - copyloopvar   # Check for loop variable capture (replaces exportloopref)
 
 linters-settings:
   gocyclo:

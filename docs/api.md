@@ -314,6 +314,31 @@ When multiple errors occur, they're aggregated:
 "multiple errors: validation error on field 'ID': field is required; parse error on field 'Age': cannot convert string 'invalid' to integer"
 ```
 
+### Security Consideration: Error Messages
+
+**Important**: Error messages include field names and the actual values that failed validation or parsing. For example:
+- `ParseError` contains the invalid value in the `Value` field
+- `ValidationError` includes the field value that failed validation
+- Error messages may include sensitive data in their descriptions
+
+When handling errors in production:
+- Be cautious when logging errors that may contain sensitive data (passwords, tokens, PII)
+- Consider sanitizing error messages before displaying them to end users
+- Use structured logging that can filter sensitive fields
+- For API responses, you may want to return generic error messages while logging detailed errors internally
+
+Example of safe error handling:
+```go
+user, err := model.ParseInto[User](data)
+if err != nil {
+    // Internal logging - includes full details
+    log.Error("parse failed", "error", err)
+
+    // User-facing response - sanitized
+    return errors.New("invalid request data")
+}
+```
+
 ## Struct Tag Support
 
 ### JSON Tags
