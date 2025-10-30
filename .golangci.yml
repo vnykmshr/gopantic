@@ -89,9 +89,14 @@ issues:
     - source: "func (coerce(To(Int|Uint|Float|String)|parseTime)|toInt)"
       linters:
         - gocyclo
-    
-    # Accept complexity in comprehensive validators 
+
+    # Accept complexity in comprehensive validators
     - source: "func \\(.*\\) Validate"
+      linters:
+        - gocyclo
+
+    # Accept complexity in ParseIntoWithFormat - inherent to main parsing logic
+    - source: "func ParseIntoWithFormat"
       linters:
         - gocyclo
     

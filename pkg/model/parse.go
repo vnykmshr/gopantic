@@ -9,7 +9,7 @@ import (
 // MaxInputSize is the default maximum size for input data (10MB).
 // Set to 0 to disable size checking. This prevents resource exhaustion
 // from maliciously large inputs.
-var MaxInputSize int = 10 * 1024 * 1024 // 10MB
+var MaxInputSize = 10 * 1024 * 1024 // 10MB
 
 // ParseInto parses raw data into a struct of type T with automatic format detection, type coercion, and validation.
 // The format is automatically detected (JSON or YAML) based on the content structure.
