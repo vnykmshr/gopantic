@@ -80,9 +80,9 @@ jobs:
           ${{ runner.os }}-go-
 
     - name: Run golangci-lint
-      uses: golangci/golangci-lint-action@v7
+      uses: golangci/golangci-lint-action@v6
       with:
-        version: v2.5.0
+        version: v1.62
         args: --timeout=5m
 
   security:
