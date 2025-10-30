@@ -5,9 +5,10 @@ run:
   modules-download-mode: readonly
 
 output:
-  format: colored-line-number
   print-issued-lines: true
   print-linter-name: true
+  formats:
+    - format: colored-line-number
 
 linters:
   disable-all: true
@@ -67,7 +68,6 @@ issues:
   exclude-use-default: false
   max-issues-per-linter: 0
   max-same-issues: 0
-  uniq-by-line: true
   
   exclude-rules:
     # Exclude some linters from running on tests files
