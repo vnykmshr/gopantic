@@ -82,6 +82,13 @@ linters:
           - gosec
           - gocritic
 
+      # Exclude some linters from running on examples
+      - path: examples/
+        linters:
+          - gocyclo
+          - errcheck
+          - dupl
+
       # Exclude known linters from generated files
       - path: ".*\\.pb\\.go"
         linters:
@@ -89,17 +96,17 @@ linters:
           - stylecheck
 
       # Accept high complexity in type coercion functions - inherent to comprehensive type handling
-      - text: "func (coerce(To(Int|Uint|Float|String)|parseTime)|toInt)"
+      - text: "func `(coerce(To(Int|Uint|Float|String)|parseTime)|toInt)`"
         linters:
           - gocyclo
 
       # Accept complexity in comprehensive validators
-      - text: "func \\(.*\\) Validate"
+      - text: "func `.*Validate`"
         linters:
           - gocyclo
 
       # Accept complexity in ParseIntoWithFormat - inherent to main parsing logic
-      - text: "func ParseIntoWithFormat"
+      - text: "func `ParseIntoWithFormat`"
         linters:
           - gocyclo
 
