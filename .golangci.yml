@@ -1,19 +1,21 @@
+version: "2"
+
 run:
   timeout: 5m
   issues-exit-code: 1
   tests: true
   modules-download-mode: readonly
 
-version: "2"
-
 output:
-  print-issued-lines: true
-  print-linter-name: true
+  show-stats: false
   formats:
-    colored-line-number: {}
+    text:
+      colors: true
+      print-issued-lines: true
+      print-linter-name: true
 
 linters:
-  disable-all: true
+  default: none
   enable:
     # Core linters compatible with golangci-lint v2
     - errcheck      # Check for unchecked errors
@@ -29,90 +31,93 @@ linters:
     - gosec         # Security checker
     - prealloc      # Find slice declarations with non-zero initial length
 
-linters-settings:
-  gocyclo:
-    min-complexity: 15
+  settings:
+    gocyclo:
+      min-complexity: 15
 
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - style
-      - performance
-    disabled-checks:
-      - unnamedResult
-      - hugeParam
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - style
+        - performance
+      disabled-checks:
+        - unnamedResult
+        - hugeParam
 
-  revive:
+    revive:
+      rules:
+        - name: var-naming
+        - name: package-comments
+        - name: exported
+        - name: var-declaration
+        - name: blank-imports
+        - name: context-as-argument
+        - name: dot-imports
+        - name: error-return
+        - name: error-strings
+        - name: error-naming
+        - name: increment-decrement
+        - name: range
+        - name: receiver-naming
+        - name: time-naming
+        - name: unexported-return
+        - name: indent-error-flow
+        - name: errorf
+
+    gosec:
+      excludes:
+        - G404 # Insecure random number source (rand)
+
+  exclusions:
+    presets: []
+    paths: []
+    generated: ignore
     rules:
-      - name: var-naming
-      - name: package-comments
-      - name: exported
-      - name: var-declaration
-      - name: blank-imports
-      - name: context-as-argument
-      - name: dot-imports
-      - name: error-return
-      - name: error-strings
-      - name: error-naming
-      - name: increment-decrement
-      - name: range
-      - name: receiver-naming
-      - name: time-naming
-      - name: unexported-return
-      - name: indent-error-flow
-      - name: errorf
+      # Exclude some linters from running on tests files
+      - path: _test\.go
+        linters:
+          - gocyclo
+          - errcheck
+          - dupl
+          - gosec
+          - gocritic
 
-  gosec:
-    excludes:
-      - G404 # Insecure random number source (rand)
+      # Exclude known linters from generated files
+      - path: ".*\\.pb\\.go"
+        linters:
+          - revive
+          - stylecheck
+
+      # Accept high complexity in type coercion functions - inherent to comprehensive type handling
+      - text: "func (coerce(To(Int|Uint|Float|String)|parseTime)|toInt)"
+        linters:
+          - gocyclo
+
+      # Accept complexity in comprehensive validators
+      - text: "func \\(.*\\) Validate"
+        linters:
+          - gocyclo
+
+      # Accept complexity in ParseIntoWithFormat - inherent to main parsing logic
+      - text: "func ParseIntoWithFormat"
+        linters:
+          - gocyclo
+
+      # Accept duplication between Min/Max validators - expected pattern
+      - path: pkg/model/validators\.go
+        text: "lines are duplicate"
+        linters:
+          - dupl
+
+      # Accept unused error returns for future API extensibility
+      - text: "result .* is always nil"
+        linters:
+          - unparam
+
+      # Exclude common false positives
+      - text: "Error return value of .((os\\.)?std(out|err)\\..*|.*Close|.*Flush|os\\.Remove(All)?|.*printf?|os\\.(Un)?Setenv). is not checked"
 
 issues:
-  exclude-use-default: false
-  max-issues-per-linter: 0
+  max-per-linter: 0
   max-same-issues: 0
-  
-  exclude-rules:
-    # Exclude some linters from running on tests files
-    - path: _test\.go
-      linters:
-        - gocyclo
-        - errcheck
-        - dupl
-        - gosec
-        - gocritic
-        
-    # Exclude known linters from generated files
-    - path: ".*\\.pb\\.go"
-      linters:
-        - revive
-        - stylecheck
-    
-    # Accept high complexity in type coercion functions - inherent to comprehensive type handling
-    - source: "func (coerce(To(Int|Uint|Float|String)|parseTime)|toInt)"
-      linters:
-        - gocyclo
-
-    # Accept complexity in comprehensive validators
-    - source: "func \\(.*\\) Validate"
-      linters:
-        - gocyclo
-
-    # Accept complexity in ParseIntoWithFormat - inherent to main parsing logic
-    - source: "func ParseIntoWithFormat"
-      linters:
-        - gocyclo
-    
-    # Accept duplication between Min/Max validators - expected pattern
-    - path: pkg/model/validators\.go
-      text: "lines are duplicate"
-      linters:
-        - dupl
-        
-    # Accept unused error returns for future API extensibility
-    - text: "result .* is always nil"
-      linters:
-        - unparam
-        
-  exclude:
-    # Exclude common false positives
-    - "Error return value of .((os\\.)?std(out|err)\\..*|.*Close|.*Flush|os\\.Remove(All)?|.*printf?|os\\.(Un)?Setenv). is not checked"
+  uniq-by-line: true
