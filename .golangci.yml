@@ -82,12 +82,16 @@ linters:
           - gosec
           - gocritic
 
-      # Exclude some linters from running on examples
+      # Exclude linters from running on examples (demo code)
       - path: examples/
         linters:
           - gocyclo
           - errcheck
           - dupl
+          - gocritic
+          - gosec
+          - revive
+          - unparam
 
       # Exclude known linters from generated files
       - path: ".*\\.pb\\.go"
