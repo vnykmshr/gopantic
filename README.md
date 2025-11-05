@@ -180,7 +180,8 @@ make hooks
 - [Migration Guide](docs/migration.md) - Migrating from encoding/json, validator, etc.
 - [Architecture & Design](docs/architecture.md) - Implementation details and design decisions
 - [Examples](examples/) - Practical usage examples
-- [Security Policy](SECURITY.md) - Vulnerability reporting and security considerations
+- [Security Policy](.github/SECURITY.md) - Vulnerability reporting and security considerations
+- [Changelog](docs/CHANGELOG.md) - Version history and changes
 
 ## License
 
