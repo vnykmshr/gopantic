@@ -71,7 +71,7 @@ linters:
   exclusions:
     presets: []
     paths: []
-    generated: ignore
+    generated: lax
     rules:
       # Exclude some linters from running on tests files
       - path: _test\.go
@@ -118,6 +118,5 @@ linters:
       - text: "Error return value of .((os\\.)?std(out|err)\\..*|.*Close|.*Flush|os\\.Remove(All)?|.*printf?|os\\.(Un)?Setenv). is not checked"
 
 issues:
-  max-per-linter: 0
   max-same-issues: 0
   uniq-by-line: true
