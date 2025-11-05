@@ -4,10 +4,13 @@ run:
   tests: true
   modules-download-mode: readonly
 
+version: "2"
+
 output:
   print-issued-lines: true
   print-linter-name: true
-  formats: colored-line-number
+  formats:
+    colored-line-number: {}
 
 linters:
   disable-all: true
