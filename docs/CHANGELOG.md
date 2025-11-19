@@ -89,7 +89,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automatic format detection (JSON vs YAML)
 - Comprehensive example collection covering real-world scenarios
 - Production-ready with extensive test coverage
-- Compatible with Go 1.21+
+- Compatible with Go 1.23+
 
 ### Examples
 - Basic parsing with type coercion
