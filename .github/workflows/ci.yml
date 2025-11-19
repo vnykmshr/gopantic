@@ -7,7 +7,7 @@ on:
     branches: [ main, develop ]
 
 env:
-  GO_VERSION: '1.21'
+  GO_VERSION: '1.23'
 
 jobs:
   test:
@@ -103,7 +103,7 @@ jobs:
 
     - name: Run gosec
       run: |
-        go install github.com/securego/gosec/v2/cmd/gosec@v2.18.2
+        go install github.com/securego/gosec/v2/cmd/gosec@latest
         gosec -fmt sarif -out gosec.sarif -exclude-dir=examples ./... || true
 
     - name: Upload SARIF file
@@ -224,7 +224,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        go-version: ['1.20', '1.21']
+        go-version: ['1.23', '1.24']
     runs-on: ${{ matrix.os }}
 
     steps:
