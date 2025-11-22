@@ -49,11 +49,13 @@ func main() {
 - **JSON/YAML parsing** with automatic format detection
 - **Type coercion** (`"123"` → `123`, `"true"` → `true`)
 - **Validation** using struct tags (`validate:"required,email,min=5"`)
+- **Standalone validation** - use `Validate()` independently of parsing
 - **Cross-field validation** (password confirmation, field comparisons)
 - **Built-in validators**: `required`, `min`, `max`, `email`, `alpha`, `alphanum`, `length`
 - **Nested structs** and arrays with full validation
 - **Time parsing** (RFC3339, Unix timestamps, custom formats)
 - **Pointer support** for optional fields (`*string`, `*int`)
+- **json.RawMessage support** for flexible/deferred JSON parsing
 - **Caching support** for repeated identical inputs (optional)
 - **Thread-safe** concurrent parsing
 - **Zero dependencies** (except optional YAML support)
@@ -72,6 +74,61 @@ age: 28
 `)
 
 user, err := model.ParseInto[User](yamlData) // Automatic YAML detection
+```
+
+## json.RawMessage Support
+
+gopantic seamlessly handles `json.RawMessage` fields for flexible metadata and JSONB database columns:
+
+```go
+type Account struct {
+    ID          string          `json:"id" validate:"required"`
+    Name        string          `json:"name" validate:"required,min=2"`
+    MetadataRaw json.RawMessage `json:"metadata,omitempty"`
+}
+
+input := []byte(`{
+    "id": "acc_123",
+    "name": "John Doe",
+    "metadata": {"preferences": {"theme": "dark"}, "tags": ["vip"]}
+}`)
+
+account, err := model.ParseInto[Account](input)
+// MetadataRaw preserves the raw JSON for later parsing
+```
+
+## Standalone Validation
+
+Use `Validate()` to validate structs from any source (database, environment, etc.):
+
+```go
+type Config struct {
+    Host string `json:"host" validate:"required"`
+    Port int    `json:"port" validate:"min=1,max=65535"`
+}
+
+// Populate from environment or database
+config := Config{
+    Host: os.Getenv("HOST"),
+    Port: 8080,
+}
+
+// Validate independently
+if err := model.Validate(&config); err != nil {
+    log.Fatal(err)
+}
+```
+
+This enables flexible patterns:
+
+```go
+// Pattern 1: Standard library unmarshal + gopantic validation
+var req Request
+json.Unmarshal(body, &req)  // Handles json.RawMessage correctly
+model.Validate(&req)         // Apply gopantic validation rules
+
+// Pattern 2: All-in-one (parsing + validation)
+req, err := model.ParseInto[Request](body)
 ```
 
 ## Validation

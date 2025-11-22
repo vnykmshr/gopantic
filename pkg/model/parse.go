@@ -1,9 +1,12 @@
 package model
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"time"
+
+	"gopkg.in/yaml.v3"
 )
 
 // MaxInputSize is the default maximum size for input data (10MB).
@@ -62,6 +65,168 @@ func ParseIntoWithFormat[T any](raw []byte, format Format) (T, error) {
 		return zero, fmt.Errorf("input size %d bytes exceeds maximum allowed size %d bytes", len(raw), MaxInputSize)
 	}
 
+	// Strategy: Try standard unmarshal first (handles json.RawMessage, custom UnmarshalJSON, etc.)
+	// If that succeeds, apply selective coercion only where needed
+	// If it fails (due to type mismatches), fall back to map-based coercion
+
+	var result T
+	unmarshalErr := unmarshalByFormat(raw, &result, format)
+
+	if unmarshalErr == nil {
+		// Standard unmarshal succeeded
+		// Apply selective type coercion for fields that need it (e.g., "123" string -> int)
+		if err := applySelectiveCoercion(&result, raw, format); err != nil {
+			return zero, err
+		}
+
+		// Validate the result
+		if err := Validate(&result); err != nil {
+			return zero, err
+		}
+
+		return result, nil
+	}
+
+	// Standard unmarshal failed, fall back to map-based coercion approach
+	// This handles cases where the input has type mismatches that need coercion
+	return parseWithMapCoercion[T](raw, format)
+}
+
+// unmarshalByFormat unmarshals raw bytes into a value using the appropriate decoder
+func unmarshalByFormat(raw []byte, v interface{}, format Format) error {
+	switch format {
+	case FormatJSON:
+		return json.Unmarshal(raw, v)
+	case FormatYAML:
+		return yaml.Unmarshal(raw, v)
+	default:
+		return fmt.Errorf("unsupported format: %v", format)
+	}
+}
+
+// applySelectiveCoercion applies type coercion to fields that need it
+// This is called after successful standard unmarshal to handle type coercion cases
+func applySelectiveCoercion(v interface{}, raw []byte, format Format) error {
+	val := reflect.ValueOf(v)
+	if val.Kind() != reflect.Ptr {
+		return fmt.Errorf("applySelectiveCoercion requires a pointer")
+	}
+
+	val = val.Elem()
+	if val.Kind() != reflect.Struct {
+		// Only structs need selective coercion
+		return nil
+	}
+
+	// Parse raw to map to get original field values for comparison
+	var dataMap map[string]interface{}
+	if err := unmarshalByFormat(raw, &dataMap, format); err != nil {
+		// If we can't parse to map, skip coercion (standard unmarshal already worked)
+		return nil
+	}
+
+	typ := val.Type()
+
+	for i := 0; i < val.NumField(); i++ {
+		field := typ.Field(i)
+		fieldVal := val.Field(i)
+
+		if !fieldVal.CanSet() {
+			continue
+		}
+
+		fieldKey := getFieldKey(field, format)
+		if fieldKey == "-" {
+			continue
+		}
+
+		rawValue, exists := dataMap[fieldKey]
+		if !exists {
+			continue
+		}
+
+		// Check if this field needs coercion
+		if needsCoercion(rawValue, field.Type) {
+			coerced, err := CoerceValueWithFormat(rawValue, field.Type, field.Name, format)
+			if err != nil {
+				return err
+			}
+			if err := setReflectValue(fieldVal, coerced); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// needsCoercion checks if a field needs type coercion
+func needsCoercion(rawValue interface{}, targetType reflect.Type) bool {
+	if rawValue == nil {
+		return false
+	}
+
+	rawType := reflect.TypeOf(rawValue)
+
+	// If types already match, no coercion needed
+	if rawType == targetType {
+		return false
+	}
+
+	// Check for common coercion cases
+	// String to number
+	if rawType.Kind() == reflect.String {
+		switch targetType.Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+			reflect.Float32, reflect.Float64, reflect.Bool:
+			return true
+		}
+	}
+
+	// Number to string
+	switch rawType.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+		reflect.Float32, reflect.Float64:
+		if targetType.Kind() == reflect.String {
+			return true
+		}
+	}
+
+	// Bool coercion (string/number to bool)
+	if targetType.Kind() == reflect.Bool {
+		return true
+	}
+
+	return false
+}
+
+// setReflectValue sets a reflect.Value with proper type handling
+func setReflectValue(fieldVal reflect.Value, value interface{}) error {
+	if value == nil {
+		return nil
+	}
+
+	valReflect := reflect.ValueOf(value)
+
+	if !valReflect.Type().AssignableTo(fieldVal.Type()) {
+		// Try conversion
+		if valReflect.Type().ConvertibleTo(fieldVal.Type()) {
+			fieldVal.Set(valReflect.Convert(fieldVal.Type()))
+			return nil
+		}
+		return fmt.Errorf("cannot assign %v to %v", valReflect.Type(), fieldVal.Type())
+	}
+
+	fieldVal.Set(valReflect)
+	return nil
+}
+
+// parseWithMapCoercion is the fallback parser that uses map-based coercion
+// This is the original gopantic parsing logic
+func parseWithMapCoercion[T any](raw []byte, format Format) (T, error) {
+	var zero T
 	var errors ErrorList
 
 	// Get the appropriate parser for the format
@@ -269,6 +434,85 @@ func validateFieldValueWithStruct(fieldName, jsonKey string, value interface{}, 
 	}
 
 	// No validation rules found for this field
+	return nil
+}
+
+// Validate validates a struct using gopantic validation rules defined in struct tags.
+// This function can be used independently of parsing, allowing you to validate
+// structs that were populated from any source (JSON, YAML, database, environment variables, etc.).
+//
+// Example:
+//
+//	type User struct {
+//	    ID   int    `json:"id" validate:"required,min=1"`
+//	    Name string `json:"name" validate:"required,min=2"`
+//	}
+//
+//	user := User{ID: 42, Name: "Alice"}
+//	if err := model.Validate(&user); err != nil {
+//	    log.Fatal(err)
+//	}
+func Validate[T any](v *T) error {
+	if v == nil {
+		return fmt.Errorf("Validate: nil pointer provided")
+	}
+
+	val := reflect.ValueOf(v).Elem()
+	typ := val.Type()
+
+	if typ.Kind() != reflect.Struct {
+		return fmt.Errorf("Validate: expected struct, got %v", typ.Kind())
+	}
+
+	return validateStructValue(val, typ)
+}
+
+// validateStructValue validates a struct value recursively
+func validateStructValue(val reflect.Value, typ reflect.Type) error {
+	validation := ParseValidationTags(typ)
+	var errors ErrorList
+
+	for i := 0; i < val.NumField(); i++ {
+		field := typ.Field(i)
+		fieldVal := val.Field(i)
+
+		if !fieldVal.CanInterface() {
+			continue
+		}
+
+		// Get field key for validation (use json tag by default)
+		fieldKey := getFieldKey(field, FormatJSON)
+		if fieldKey == "-" {
+			continue
+		}
+
+		// Recursively validate nested structs
+		if fieldVal.Kind() == reflect.Struct && field.Type != reflect.TypeOf(time.Time{}) {
+			if err := validateStructValue(fieldVal, fieldVal.Type()); err != nil {
+				errors.Add(err)
+			}
+		}
+
+		// Recursively validate pointer to struct
+		if fieldVal.Kind() == reflect.Ptr && !fieldVal.IsNil() {
+			elem := fieldVal.Elem()
+			if elem.Kind() == reflect.Struct && elem.Type() != reflect.TypeOf(time.Time{}) {
+				if err := validateStructValue(elem, elem.Type()); err != nil {
+					errors.Add(err)
+				}
+			}
+		}
+
+		// Apply validation rules (including cross-field validators)
+		if err := validateFieldValueWithStruct(field.Name, fieldKey, fieldVal.Interface(), validation, val); err != nil {
+			errors.Add(err)
+		}
+	}
+
+	if errors.HasErrors() {
+		return errors.AsError()
+	}
+
 	return nil
 }
 

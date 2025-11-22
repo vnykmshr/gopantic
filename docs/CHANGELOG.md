@@ -5,6 +5,60 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-11-22
+
+### Added
+
+- **`json.RawMessage` support**: Full support for `json.RawMessage` fields, enabling flexible metadata storage and PostgreSQL JSONB integration
+- **Standalone `Validate[T](*T)` function**: Validate structs independently of parsing, allowing validation of data from any source (database, environment variables, etc.)
+- **Hybrid unmarshal strategy**: Uses standard `encoding/json` and `gopkg.in/yaml.v3` as base unmarshaler, then applies selective type coercion only where needed
+- **Recursive nested struct validation**: Validation now properly handles deeply nested structs and pointer-to-struct fields
+
+### Changed
+
+- **Parsing architecture**: Refactored to use standard library unmarshalers first, with fallback to map-based coercion for complex type conversion cases
+- **Better ecosystem compatibility**: Works seamlessly with custom `UnmarshalJSON` methods and standard Go patterns
+- **Performance improvement**: Single unmarshal pass for well-typed structs (previously required map conversion first)
+
+### Fixed
+
+- **Issue #10**: `json.RawMessage` fields no longer cause "cannot coerce map to slice" errors
+- **Nested struct validation**: Fixed validation not being applied to nested struct fields
+- **Cross-field validation**: Improved handling of cross-field validators in complex struct hierarchies
+
+### Documentation
+
+- Added `json.RawMessage` usage examples to README
+- Added standalone `Validate()` function documentation
+- Added PostgreSQL JSONB integration pattern examples
+- Comprehensive test suite for `json.RawMessage` scenarios (tests/rawmessage_test.go)
+
+### Breaking Changes
+
+None - this release is fully backward compatible. Existing code continues to work unchanged.
+
+### Migration Notes
+
+**New recommended pattern for `json.RawMessage` fields:**
+
+```go
+type Request struct {
+    Name        string          `json:"name" validate:"required"`
+    MetadataRaw json.RawMessage `json:"metadata,omitempty"`
+}
+
+// Now works seamlessly
+req, err := model.ParseInto[Request](body)
+```
+
+**New standalone validation pattern:**
+
+```go
+var req Request
+json.Unmarshal(body, &req)  // Use standard library
+model.Validate(&req)         // Apply gopantic validation
+```
+
 ## [1.1.0] - 2025-10-30
 
 ### Added
