@@ -235,6 +235,9 @@ make hooks
 ## Documentation
 
 - [API Reference](docs/api.md) - Complete API documentation with examples
+- [Advanced Type Handling](docs/advanced-types.md) - Complex types, json.RawMessage, nested validation
+- [Database Integration](docs/database-integration.md) - PostgreSQL JSONB patterns and ORM integration
+- [Limitations](docs/limitations.md) - Current limitations and workarounds
 - [Migration Guide](docs/migration.md) - Migrating from encoding/json, validator, etc.
 - [Architecture & Design](docs/architecture.md) - Implementation details and design decisions
 - [Examples](examples/) - Practical usage examples
