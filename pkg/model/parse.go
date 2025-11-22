@@ -117,15 +117,10 @@ func ParseIntoWithFormat[T any](raw []byte, format Format) (T, error) {
 	unmarshalErr := unmarshalByFormat(raw, &result, format)
 
 	if unmarshalErr == nil {
-		// Standard unmarshal succeeded - skip selective coercion to avoid double parsing
-		// (Performance optimization: applySelectiveCoercion was parsing raw data again)
-		// If coercion is truly needed, the unmarshal would have failed and we'd use parseWithMapCoercion
-
-		// Validate the result
+		// Standard unmarshal succeeded; validate and return
 		if err := Validate(&result); err != nil {
 			return zero, err
 		}
-
 		return result, nil
 	}
 
@@ -144,125 +139,6 @@ func unmarshalByFormat(raw []byte, v interface{}, format Format) error {
 	default:
 		return fmt.Errorf("unsupported format: %v", format)
 	}
-}
-
-// applySelectiveCoercion applies type coercion to fields that need it
-// This is called after successful standard unmarshal to handle type coercion cases
-func applySelectiveCoercion(v interface{}, raw []byte, format Format) error {
-	val := reflect.ValueOf(v)
-	if val.Kind() != reflect.Ptr {
-		return fmt.Errorf("applySelectiveCoercion requires a pointer")
-	}
-
-	val = val.Elem()
-	if val.Kind() != reflect.Struct {
-		// Only structs need selective coercion
-		return nil
-	}
-
-	// Parse raw to map to get original field values for comparison
-	var dataMap map[string]interface{}
-	if err := unmarshalByFormat(raw, &dataMap, format); err != nil {
-		// If we can't parse to map, skip coercion (standard unmarshal already worked)
-		return nil
-	}
-
-	typ := val.Type()
-
-	for i := 0; i < val.NumField(); i++ {
-		field := typ.Field(i)
-		fieldVal := val.Field(i)
-
-		if !fieldVal.CanSet() {
-			continue
-		}
-
-		fieldKey := getFieldKey(field, format)
-		if fieldKey == "-" {
-			continue
-		}
-
-		rawValue, exists := dataMap[fieldKey]
-		if !exists {
-			continue
-		}
-
-		// Check if this field needs coercion
-		if needsCoercion(rawValue, field.Type) {
-			coerced, err := CoerceValueWithFormat(rawValue, field.Type, field.Name, format)
-			if err != nil {
-				return err
-			}
-			if err := setReflectValue(fieldVal, coerced); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-// needsCoercion checks if a field needs type coercion
-func needsCoercion(rawValue interface{}, targetType reflect.Type) bool {
-	if rawValue == nil {
-		return false
-	}
-
-	rawType := reflect.TypeOf(rawValue)
-
-	// If types already match, no coercion needed
-	if rawType == targetType {
-		return false
-	}
-
-	// Check for common coercion cases
-	// String to number
-	if rawType.Kind() == reflect.String {
-		switch targetType.Kind() {
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
-			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
-			reflect.Float32, reflect.Float64, reflect.Bool:
-			return true
-		}
-	}
-
-	// Number to string
-	switch rawType.Kind() {
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
-		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
-		reflect.Float32, reflect.Float64:
-		if targetType.Kind() == reflect.String {
-			return true
-		}
-	}
-
-	// Bool coercion (string/number to bool)
-	if targetType.Kind() == reflect.Bool {
-		return true
-	}
-
-	return false
-}
-
-// setReflectValue sets a reflect.Value with proper type handling
-func setReflectValue(fieldVal reflect.Value, value interface{}) error {
-	if value == nil {
-		return nil
-	}
-
-	valReflect := reflect.ValueOf(value)
-
-	if !valReflect.Type().AssignableTo(fieldVal.Type()) {
-		// Try conversion
-		if valReflect.Type().ConvertibleTo(fieldVal.Type()) {
-			fieldVal.Set(valReflect.Convert(fieldVal.Type()))
-			return nil
-		}
-		return fmt.Errorf("cannot assign %v to %v", valReflect.Type(), fieldVal.Type())
-	}
-
-	fieldVal.Set(valReflect)
-	return nil
 }
 
 // parseWithMapCoercion is the fallback parser that uses map-based coercion

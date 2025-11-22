@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"math"
 	"reflect"
 	"strconv"
 	"time"
@@ -101,7 +102,7 @@ func coerceToInt(value interface{}, fieldName string) (int64, error) {
 	case int64:
 		return v, nil
 	case uint:
-		if v > 9223372036854775807 { // max int64
+		if v > math.MaxInt64 {
 			return 0, NewParseError(fieldName, value, "int64", "value too large for int64")
 		}
 		return int64(v), nil
@@ -112,7 +113,7 @@ func coerceToInt(value interface{}, fieldName string) (int64, error) {
 	case uint32:
 		return int64(v), nil
 	case uint64:
-		if v > 9223372036854775807 { // max int64
+		if v > math.MaxInt64 {
 			return 0, NewParseError(fieldName, value, "int64", "value too large for int64")
 		}
 		return int64(v), nil

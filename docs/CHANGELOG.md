@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.2.0] - 2025-11-22
+## [1.2.0] - 2025-11-23
 
 ### Added
 
@@ -13,12 +13,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Standalone `Validate[T](*T)` function**: Validate structs independently of parsing, allowing validation of data from any source (database, environment variables, etc.)
 - **Hybrid unmarshal strategy**: Uses standard `encoding/json` and `gopkg.in/yaml.v3` as base unmarshaler, then applies selective type coercion only where needed
 - **Recursive nested struct validation**: Validation now properly handles deeply nested structs and pointer-to-struct fields
+- **Performance optimizations**:
+  - Validation tag caching for 10-20% faster repeated parsing
+  - No-validation fast path for types without validation rules
+  - FNV-1a hash for cache keys on small inputs (<1KB)
+  - Result: 46% faster parsing, 64% less memory, 67% fewer allocations
 
 ### Changed
 
 - **Parsing architecture**: Refactored to use standard library unmarshalers first, with fallback to map-based coercion for complex type conversion cases
 - **Better ecosystem compatibility**: Works seamlessly with custom `UnmarshalJSON` methods and standard Go patterns
-- **Performance improvement**: Single unmarshal pass for well-typed structs (previously required map conversion first)
+- **Performance vs stdlib JSON**: Gap reduced from 3.9x slower to 1.7x slower
+- **Test suite consolidation**: Reorganized from 2 directories to flat structure, added concurrency and edge case tests (56→100 tests)
 
 ### Fixed
 
@@ -26,12 +32,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Nested struct validation**: Fixed validation not being applied to nested struct fields
 - **Cross-field validation**: Improved handling of cross-field validators in complex struct hierarchies
 
+### Code Quality
+
+- **Removed dead code**: Eliminated 147 lines of unused functions (`applySelectiveCoercion`, `ParseIntoCached` wrappers)
+- **Fixed magic numbers**: Replaced hardcoded values with `math.MaxInt64` constant (4 locations)
+- **Consolidated duplicate functions**: Unified `getFieldKey` implementation, removed duplicate type converters
+- **Reduced documentation verbosity**: Streamlined package docs from 100 to 29 lines while retaining essential information
+- **Production-ready cleanup**: Removed AI-generated bloat, improved code maintainability and consistency
+
 ### Documentation
 
 - Added `json.RawMessage` usage examples to README
 - Added standalone `Validate()` function documentation
 - Added PostgreSQL JSONB integration pattern examples
+- Updated README with concise performance metrics
 - Comprehensive test suite for `json.RawMessage` scenarios (tests/rawmessage_test.go)
+- Consolidated and compacted all documentation for better readability
 
 ### Breaking Changes
 

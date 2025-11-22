@@ -1,6 +1,7 @@
 package model
 
 import (
+	"math"
 	"reflect"
 	"strconv"
 	"strings"
@@ -425,7 +426,7 @@ func parseValidationTagsUncached(structType reflect.Type) *StructValidation {
 		}
 
 		// Parse JSON key
-		jsonKey := getJSONKeyFromField(field)
+		jsonKey := getFieldKey(field, FormatJSON)
 		if jsonKey == "-" {
 			continue // Field is excluded from JSON
 		}
@@ -541,27 +542,6 @@ func ValidateValueWithStruct(fieldName string, value interface{}, rules []Valida
 	return errors.AsError()
 }
 
-// getJSONKeyFromField extracts JSON key from struct field (reused from parse.go logic)
-func getJSONKeyFromField(field reflect.StructField) string {
-	tag := field.Tag.Get("json")
-	if tag == "" {
-		return field.Name
-	}
-
-	if tag == "-" {
-		return "-"
-	}
-
-	// Split on comma and take first part (the name)
-	for i, char := range tag {
-		if char == ',' {
-			return tag[:i]
-		}
-	}
-
-	return tag
-}
-
 // toFloat64 converts various numeric types to float64 for validation purposes
 func toFloat64(value interface{}) (float64, error) {
 	switch v := value.(type) {
@@ -610,7 +590,7 @@ func toInt(value interface{}) (int, error) {
 	case int64:
 		return int(v), nil
 	case uint:
-		if v > 9223372036854775807 { // max int64
+		if v > math.MaxInt64 {
 			return 0, NewParseError("", value, "int", "value too large for int")
 		}
 		return int(v), nil
@@ -621,7 +601,7 @@ func toInt(value interface{}) (int, error) {
 	case uint32:
 		return int(v), nil
 	case uint64:
-		if v > 9223372036854775807 { // max int64
+		if v > math.MaxInt64 {
 			return 0, NewParseError("", value, "int", "value too large for int")
 		}
 		return int(v), nil

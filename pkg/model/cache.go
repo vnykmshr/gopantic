@@ -245,13 +245,3 @@ func (cp *CachedParser[T]) Stats() (size, maxSize int, hitRate float64) {
 	hitRate = float64(hits) / float64(total)
 	return size, cp.config.MaxEntries, hitRate
 }
-
-// ParseIntoCached provides convenient cached parsing (falls back to non-cached for simplicity)
-func ParseIntoCached[T any](data []byte) (T, error) {
-	return ParseInto[T](data)
-}
-
-// ParseIntoWithFormatCached provides cached parsing with format specification (falls back to non-cached for simplicity)
-func ParseIntoWithFormatCached[T any](data []byte, format Format) (T, error) {
-	return ParseIntoWithFormat[T](data, format)
-}
