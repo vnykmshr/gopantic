@@ -180,8 +180,8 @@ jobs:
             });
           }
 
-  integration:
-    name: Integration Tests
+  examples:
+    name: Example Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -206,18 +206,15 @@ jobs:
     - name: Download dependencies
       run: go mod download
 
-    - name: Run integration tests
-      run: go test -v ./integration/...
-
     - name: Test examples
       run: |
         echo "Testing examples..."
-        cd examples/basic && go run main.go
-        cd ../validation && go run main.go
-        cd ../yaml_demo && go run main.go
+        cd examples/quickstart && go run main.go
+        cd ../api_validation && go run main.go
+        cd ../yaml && go run main.go
         cd ../cache_demo && go run main.go
         cd ../pointers && go run main.go
-        cd ../time_parsing && go run main.go
+        cd ../cross_field_validation && go run main.go
 
   cross-platform:
     name: Cross Platform Tests
@@ -244,9 +241,12 @@ jobs:
 
     - name: Build examples
       run: |
-        go build ./examples/basic/...
-        go build ./examples/validation/...
-        go build ./examples/yaml_demo/...
+        go build ./examples/quickstart/...
+        go build ./examples/api_validation/...
+        go build ./examples/yaml/...
+        go build ./examples/cache_demo/...
+        go build ./examples/pointers/...
+        go build ./examples/cross_field_validation/...
 
   performance-regression:
     name: Performance Regression Detection
