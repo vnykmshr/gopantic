@@ -469,6 +469,17 @@ func Validate[T any](v *T) error {
 
 // validateStructValue validates a struct value recursively
 func validateStructValue(val reflect.Value, typ reflect.Type) error {
+	return validateStructValueDepth(val, typ, 0)
+}
+
+// validateStructValueDepth validates a struct value recursively with depth tracking
+//
+//nolint:gocyclo // Complexity inherited from original validateStructValue function
+func validateStructValueDepth(val reflect.Value, typ reflect.Type, depth int) error {
+	if MaxValidationDepth > 0 && depth > MaxValidationDepth {
+		return fmt.Errorf("validation depth exceeded maximum of %d levels", MaxValidationDepth)
+	}
+
 	validation := ParseValidationTags(typ)
 	var errors ErrorList
 
@@ -488,7 +499,7 @@ func validateStructValue(val reflect.Value, typ reflect.Type) error {
 
 		// Recursively validate nested structs
 		if fieldVal.Kind() == reflect.Struct && field.Type != reflect.TypeOf(time.Time{}) {
-			if err := validateStructValue(fieldVal, fieldVal.Type()); err != nil {
+			if err := validateStructValueDepth(fieldVal, fieldVal.Type(), depth+1); err != nil {
 				errors.Add(err)
 			}
 		}
@@ -497,7 +508,7 @@ func validateStructValue(val reflect.Value, typ reflect.Type) error {
 		if fieldVal.Kind() == reflect.Ptr && !fieldVal.IsNil() {
 			elem := fieldVal.Elem()
 			if elem.Kind() == reflect.Struct && elem.Type() != reflect.TypeOf(time.Time{}) {
-				if err := validateStructValue(elem, elem.Type()); err != nil {
+				if err := validateStructValueDepth(elem, elem.Type(), depth+1); err != nil {
 					errors.Add(err)
 				}
 			}

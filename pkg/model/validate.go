@@ -238,6 +238,22 @@ var defaultRegistry = NewValidatorRegistry()
 // Global cache for validation metadata by type
 var validationCache sync.Map
 
+// MaxCacheSize is the maximum number of struct types to cache validation metadata for.
+// When the cache size exceeds this limit, the oldest entries are removed (FIFO).
+// Set to 0 for unlimited caching (not recommended for long-running services).
+// Default: 1000 types.
+var MaxCacheSize = 1000
+
+// MaxValidationDepth is the maximum depth of nested struct validation.
+// This prevents stack overflow and DoS attacks from deeply nested structures.
+// Default: 32 levels.
+var MaxValidationDepth = 32
+
+var (
+	cacheOrder      []reflect.Type
+	cacheOrderMutex sync.Mutex
+)
+
 // GetDefaultRegistry returns the default global validator registry.
 // This registry contains all built-in validators and any custom validators
 // registered via RegisterGlobalFunc and RegisterGlobalCrossFieldFunc.
@@ -316,6 +332,11 @@ func ClearValidationCache() {
 		validationCache.Delete(key)
 		return true
 	})
+
+	// Clear cache order tracking
+	cacheOrderMutex.Lock()
+	cacheOrder = nil
+	cacheOrderMutex.Unlock()
 }
 
 // ListValidators returns a list of all registered validator names (built-in, custom, and cross-field)
@@ -353,10 +374,34 @@ func ParseValidationTags(structType reflect.Type) *StructValidation {
 	// Parse validation tags
 	validation := parseValidationTagsUncached(structType)
 
-	// Store in cache
-	validationCache.Store(structType, validation)
+	// Store in cache with size limit enforcement
+	storeInValidationCache(structType, validation)
 
 	return validation
+}
+
+// storeInValidationCache stores validation metadata in the cache with size limit enforcement.
+func storeInValidationCache(structType reflect.Type, validation *StructValidation) {
+	if MaxCacheSize == 0 {
+		// Unlimited caching
+		validationCache.Store(structType, validation)
+		return
+	}
+
+	cacheOrderMutex.Lock()
+	defer cacheOrderMutex.Unlock()
+
+	// Check if cache is full
+	if len(cacheOrder) >= MaxCacheSize {
+		// Remove oldest entry (FIFO)
+		oldest := cacheOrder[0]
+		validationCache.Delete(oldest)
+		cacheOrder = cacheOrder[1:]
+	}
+
+	// Add new entry
+	validationCache.Store(structType, validation)
+	cacheOrder = append(cacheOrder, structType)
 }
 
 // parseValidationTagsUncached performs the actual parsing without caching
