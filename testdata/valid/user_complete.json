@@ -1,0 +1,30 @@
+{
+	"id": 123,
+	"username": "johndoe",
+	"email": "john@example.com",
+	"first_name": "John",
+	"last_name": "Doe",
+	"age": 30,
+	"is_active": true,
+	"profile": {
+		"bio": "Software developer and tech enthusiast",
+		"website": "https://johndoe.dev",
+		"location": "San Francisco, CA",
+		"skills": ["Go", "Python", "JavaScript"],
+		"languages": ["English", "Spanish"]
+	},
+	"settings": {
+		"theme": "dark",
+		"notifications": {
+			"email": true,
+			"push": false,
+			"sms": true
+		},
+		"privacy": {
+			"profile_visible": true,
+			"email_visible": false,
+			"show_online": true
+		}
+	},
+	"created_at": "2023-01-15T10:30:00Z"
+}

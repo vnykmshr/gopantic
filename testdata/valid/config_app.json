@@ -1,0 +1,16 @@
+{
+	"name": "MyApp",
+	"version": "1.2.3",
+	"environment": "production",
+	"database": {
+		"host": "db.example.com",
+		"port": 5432,
+		"username": "app_user",
+		"password": "secure_password123",
+		"database": "myapp_db",
+		"ssl": true,
+		"timeout": 30000
+	},
+	"debug": false,
+	"features": ["feature_a", "feature_b", "feature_c"]
+}

@@ -164,3 +164,99 @@ func BenchmarkCachedParsing(b *testing.B) {
 		}
 	}
 }
+
+// Benchmark: Validation overhead - Parse with validation vs without
+func BenchmarkValidationOverhead_WithValidation(b *testing.B) {
+	data := []byte(`{
+		"id": 123,
+		"name": "John Doe",
+		"email": "john@example.com",
+		"age": 30,
+		"created_at": "2023-01-01T12:00:00Z",
+		"active": true
+	}`)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := model.ParseInto[BenchUser](data)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkValidationOverhead_WithoutValidation(b *testing.B) {
+	// Use User from fixtures which has no validation tags
+	data := []byte(`{
+		"id": 123,
+		"name": "John Doe",
+		"email": "john@example.com",
+		"age": 30
+	}`)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := model.ParseInto[User](data)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+// Benchmark: Standalone validation performance
+func BenchmarkValidate_Simple(b *testing.B) {
+	user := BenchUser{
+		ID:    123,
+		Name:  "John Doe",
+		Email: "john@example.com",
+		Age:   30,
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		err := model.Validate(&user)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+// Benchmark: YAML parsing performance
+func BenchmarkYAMLParsing(b *testing.B) {
+	data := []byte(`
+id: 123
+name: John Doe
+email: john@example.com
+age: 30
+created_at: 2023-01-01T12:00:00Z
+active: true
+`)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := model.ParseInto[BenchUser](data)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+// Benchmark: YAML vs JSON parsing comparison
+func BenchmarkJSONParsing(b *testing.B) {
+	data := []byte(`{
+		"id": 123,
+		"name": "John Doe",
+		"email": "john@example.com",
+		"age": 30,
+		"created_at": "2023-01-01T12:00:00Z",
+		"active": true
+	}`)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := model.ParseInto[BenchUser](data)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}

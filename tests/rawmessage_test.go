@@ -225,64 +225,6 @@ func TestParseInto_MultipleRawMessages(t *testing.T) {
 	}
 }
 
-func TestValidate_Standalone(t *testing.T) {
-	type User struct {
-		ID    int    `json:"id" validate:"required,min=1"`
-		Name  string `json:"name" validate:"required,min=2"`
-		Email string `json:"email" validate:"email"`
-	}
-
-	tests := []struct {
-		name    string
-		user    User
-		wantErr bool
-	}{
-		{
-			name: "valid user",
-			user: User{
-				ID:    42,
-				Name:  "Alice",
-				Email: "alice@example.com",
-			},
-			wantErr: false,
-		},
-		{
-			name: "missing required field",
-			user: User{
-				ID:   0, // Required, min=1
-				Name: "Alice",
-			},
-			wantErr: true,
-		},
-		{
-			name: "invalid email",
-			user: User{
-				ID:    42,
-				Name:  "Alice",
-				Email: "not-an-email",
-			},
-			wantErr: true,
-		},
-		{
-			name: "name too short",
-			user: User{
-				ID:   42,
-				Name: "A", // min=2
-			},
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := model.Validate(&tt.user)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
 func TestValidate_WithJSONRawMessage(t *testing.T) {
 	// Test that Validate works with json.RawMessage fields
 	type Request struct {

@@ -1,0 +1,15 @@
+name: TestApp
+version: "2.0.0"
+environment: staging
+database:
+  host: yaml-db.example.com
+  port: 3306
+  username: yaml_user
+  password: yaml_password123
+  database: yaml_app_db
+  ssl: false
+  timeout: 15000
+debug: true
+features:
+  - yaml_feature_1
+  - yaml_feature_2

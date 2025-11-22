@@ -8,39 +8,7 @@ import (
 	"github.com/vnykmshr/gopantic/pkg/model"
 )
 
-// Core test structs
-type User struct {
-	ID    int    `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
-	Age   int    `json:"age"`
-}
-
-type Product struct {
-	ID      uint64  `json:"id"`
-	Name    string  `json:"name"`
-	Price   float64 `json:"price"`
-	InStock bool    `json:"in_stock"`
-}
-
-type Event struct {
-	ID        int       `json:"id"`
-	Name      string    `json:"name"`
-	StartTime time.Time `json:"start_time"`
-	CreatedAt time.Time `json:"created_at"`
-}
-
-type Config struct {
-	Port     int      `json:"port"`
-	Enabled  bool     `json:"enabled"`
-	Features []string `json:"features"`
-	DB       Database `json:"database"`
-}
-
-type Database struct {
-	Host string `json:"host"`
-	Port int    `json:"port"`
-}
+// Note: Common test structs (User, Product, Event, Config, Database) are defined in fixtures.go
 
 func TestParseInto_BasicParsing(t *testing.T) {
 	tests := []struct {

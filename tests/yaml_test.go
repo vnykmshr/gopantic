@@ -219,41 +219,6 @@ debug: false
 	}
 }
 
-func TestParseInto_YAML_FallbackToJSONTags(t *testing.T) {
-	// SKIP: This test expects YAML parser to use JSON tags as fallback
-	// The gopkg.in/yaml.v3 library doesn't support JSON tag fallback natively.
-	// This is a known limitation of YAML parsing. Use explicit yaml tags for YAML parsing.
-	t.Skip("YAML parser doesn't fallback to JSON tags - use explicit yaml tags instead")
-
-	// Struct with only JSON tags (no yaml tags)
-	type JSONTaggedStruct struct {
-		UserID int    `json:"user_id" validate:"required"`
-		Name   string `json:"full_name" validate:"required"`
-		Active bool   `json:"is_active"`
-	}
-
-	yamlData := []byte(`
-user_id: 123
-full_name: John Doe
-is_active: true
-`)
-
-	expected := JSONTaggedStruct{
-		UserID: 123,
-		Name:   "John Doe",
-		Active: true,
-	}
-
-	result, err := model.ParseIntoWithFormat[JSONTaggedStruct](yamlData, model.FormatYAML)
-	if err != nil {
-		t.Fatalf("ParseIntoWithFormat() error = %v", err)
-	}
-
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("ParseIntoWithFormat() = %v, want %v", result, expected)
-	}
-}
-
 func TestParseInto_YAML_WithTimeFields(t *testing.T) {
 	type EventYAML struct {
 		Name      string    `yaml:"name" validate:"required"`

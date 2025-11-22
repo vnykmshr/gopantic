@@ -1,0 +1,16 @@
+{
+	"id": 125,
+	"username": "invaliduser",
+	"email": "not-an-email",
+	"first_name": "Invalid",
+	"last_name": "User",
+	"age": 20,
+	"is_active": true,
+	"profile": {
+		"bio": "Test user",
+		"location": "Test City",
+		"skills": ["Testing"],
+		"languages": ["English"]
+	},
+	"created_at": "2023-03-10T09:00:00Z"
+}

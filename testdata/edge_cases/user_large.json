@@ -1,0 +1,31 @@
+{
+	"id": 99999,
+	"username": "largedatauser",
+	"email": "large@example.com",
+	"first_name": "Large",
+	"last_name": "Dataset",
+	"age": 50,
+	"is_active": true,
+	"profile": {
+		"bio": "This is a test user with a large amount of data to test parsing performance with bigger payloads. The bio can contain up to 500 characters according to validation rules, and we're using a substantial portion of that limit here to ensure the parser handles it correctly.",
+		"location": "Big Data City, State 12345",
+		"skills": ["Skill1", "Skill2", "Skill3", "Skill4", "Skill5", "Skill6", "Skill7", "Skill8", "Skill9", "Skill10", "Skill11", "Skill12", "Skill13", "Skill14", "Skill15"],
+		"languages": ["English", "Spanish", "French", "German", "Japanese", "Chinese", "Russian", "Arabic"]
+	},
+	"settings": {
+		"theme": "dark",
+		"notifications": {
+			"email": true,
+			"push": true,
+			"sms": true,
+			"desktop": true,
+			"mobile": true
+		},
+		"privacy": {
+			"profile_visible": true,
+			"email_visible": false,
+			"show_online": true
+		}
+	},
+	"created_at": "2023-01-15T10:30:00Z"
+}

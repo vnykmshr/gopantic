@@ -3,6 +3,8 @@ package model
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
+	"hash/fnv"
 	"reflect"
 	"sync"
 	"sync/atomic"
@@ -164,10 +166,22 @@ func (cp *CachedParser[T]) evictOldest() {
 }
 
 // generateCacheKey creates a unique cache key from content and format
+// Uses FNV-1a for small inputs (<1KB) and SHA256 for larger inputs for optimal performance
 func (cp *CachedParser[T]) generateCacheKey(data []byte, format Format) string {
-	hash := sha256.Sum256(data)
-	contentHash := hex.EncodeToString(hash[:8]) // First 8 bytes for shorter keys
-	return contentHash + ":" + cp.keyPrefix
+	var contentHash string
+
+	// Use faster FNV-1a hash for small inputs (typical case)
+	if len(data) < 1024 {
+		h := fnv.New64a()
+		_, _ = h.Write(data) // hash.Hash.Write never returns an error
+		contentHash = fmt.Sprintf("%x", h.Sum64())
+	} else {
+		// Use SHA256 for large inputs for better distribution
+		hash := sha256.Sum256(data)
+		contentHash = hex.EncodeToString(hash[:8])
+	}
+
+	return fmt.Sprintf("%s:%s:%v", contentHash, cp.keyPrefix, format)
 }
 
 // ClearCache removes all cached entries

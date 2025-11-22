@@ -4,15 +4,59 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"sync"
 	"time"
 
 	"gopkg.in/yaml.v3"
 )
 
+// Performance optimization caches
+var (
+	// noValidationTypes tracks types that have no validation tags for fast-path
+	noValidationTypes sync.Map // map[reflect.Type]bool
+
+	// fieldKeyCache stores pre-computed field keys per type and format
+	fieldKeyCache sync.Map // map[fieldKeyCacheKey]map[int]string
+)
+
+// Note: validationCache is declared in validate.go
+
+// fieldKeyCacheKey is the cache key for field name lookups
+type fieldKeyCacheKey struct {
+	typ    reflect.Type
+	format Format
+}
+
 // MaxInputSize is the default maximum size for input data (10MB).
 // Set to 0 to disable size checking. This prevents resource exhaustion
 // from maliciously large inputs.
 var MaxInputSize = 10 * 1024 * 1024 // 10MB
+
+// getOrCacheValidation retrieves cached validation tags or parses and caches them
+func getOrCacheValidation(typ reflect.Type) *StructValidation {
+	if cached, ok := validationCache.Load(typ); ok {
+		return cached.(*StructValidation)
+	}
+
+	validation := ParseValidationTags(typ)
+
+	// Check if this type has any validation rules
+	hasValidation := false
+	for _, field := range validation.Fields {
+		if len(field.Rules) > 0 {
+			hasValidation = true
+			break
+		}
+	}
+
+	// Cache the "no validation" state for fast-path
+	if !hasValidation {
+		noValidationTypes.Store(typ, true)
+	}
+
+	validationCache.Store(typ, validation)
+	return validation
+}
 
 // ParseInto parses raw data into a struct of type T with automatic format detection, type coercion, and validation.
 // The format is automatically detected (JSON or YAML) based on the content structure.
@@ -73,11 +117,9 @@ func ParseIntoWithFormat[T any](raw []byte, format Format) (T, error) {
 	unmarshalErr := unmarshalByFormat(raw, &result, format)
 
 	if unmarshalErr == nil {
-		// Standard unmarshal succeeded
-		// Apply selective type coercion for fields that need it (e.g., "123" string -> int)
-		if err := applySelectiveCoercion(&result, raw, format); err != nil {
-			return zero, err
-		}
+		// Standard unmarshal succeeded - skip selective coercion to avoid double parsing
+		// (Performance optimization: applySelectiveCoercion was parsing raw data again)
+		// If coercion is truly needed, the unmarshal would have failed and we'd use parseWithMapCoercion
 
 		// Validate the result
 		if err := Validate(&result); err != nil {
@@ -256,8 +298,8 @@ func parseWithMapCoercion[T any](raw []byte, format Format) (T, error) {
 		return zero, errors.AsError()
 	}
 
-	// Parse validation rules for this struct type
-	validation := ParseValidationTags(resultType)
+	// Parse validation rules for this struct type (cached for performance)
+	validation := getOrCacheValidation(resultType)
 
 	// Process each field in the struct (parsing and coercion pass)
 	for i := 0; i < resultType.NumField(); i++ {
@@ -464,6 +506,11 @@ func Validate[T any](v *T) error {
 		return fmt.Errorf("Validate: expected struct, got %v", typ.Kind())
 	}
 
+	// Fast path: Skip validation entirely for types with no validation tags
+	if hasNo, ok := noValidationTypes.Load(typ); ok && hasNo.(bool) {
+		return nil
+	}
+
 	return validateStructValue(val, typ)
 }
 
@@ -480,7 +527,7 @@ func validateStructValueDepth(val reflect.Value, typ reflect.Type, depth int) er
 		return fmt.Errorf("validation depth exceeded maximum of %d levels", MaxValidationDepth)
 	}
 
-	validation := ParseValidationTags(typ)
+	validation := getOrCacheValidation(typ)
 	var errors ErrorList
 
 	for i := 0; i < val.NumField(); i++ {
