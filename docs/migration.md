@@ -2,98 +2,73 @@
 
 This guide helps you migrate to gopantic from common Go parsing and validation libraries.
 
-## From encoding/json + go-playground/validator
+## Quick Comparison
 
-### Before (encoding/json + validator)
+| Task | Standard Libraries | gopantic |
+|------|-------------------|----------|
+| Parse + Validate | `json.Unmarshal()` + `validate.Struct()` | `model.ParseInto[T]()` |
+| Parse YAML | `yaml.Unmarshal()` + `validate.Struct()` | `model.ParseInto[T]()` |
+| Type coercion | Manual conversion | Automatic |
+| Validation | Separate step | Integrated |
+| Custom validators | `RegisterValidation()` | `RegisterGlobalFunc()` |
+| Error handling | `ValidationErrors` | Structured error types |
 
+## Migration Examples
+
+### From encoding/json + validator
+
+**Before:**
 ```go
 import (
     "encoding/json"
     "github.com/go-playground/validator/v10"
 )
 
-type User struct {
-    ID    int    `json:"id" validate:"required,min=1"`
-    Name  string `json:"name" validate:"required,min=2"`
-    Email string `json:"email" validate:"required,email"`
-}
-
 func parseUser(data []byte) (*User, error) {
     var user User
-
-    // Step 1: Parse JSON
     if err := json.Unmarshal(data, &user); err != nil {
         return nil, err
     }
-
-    // Step 2: Validate
     validate := validator.New()
     if err := validate.Struct(user); err != nil {
         return nil, err
     }
-
     return &user, nil
 }
 ```
 
-### After (gopantic)
-
+**After:**
 ```go
 import "github.com/vnykmshr/gopantic/pkg/model"
-
-type User struct {
-    ID    int    `json:"id" validate:"required,min=1"`
-    Name  string `json:"name" validate:"required,min=2"`
-    Email string `json:"email" validate:"required,email"`
-}
 
 func parseUser(data []byte) (User, error) {
     return model.ParseInto[User](data)
 }
 ```
 
-### Key Differences
+**Key benefits:** Single call, automatic type coercion (`{"id": "42"}` works), generics return `User` directly, YAML support with same API.
 
-1. **Single call**: Parsing and validation happen together
-2. **Type coercion**: `{"id": "42"}` works automatically
-3. **Generics**: Returns `User` directly, not `*User` or `interface{}`
-4. **YAML support**: Same API works for YAML without changes
+### From encoding/json (manual validation)
 
-## From encoding/json (no validation)
-
-### Before
-
+**Before:**
 ```go
-import "encoding/json"
-
-type Config struct {
-    Port int    `json:"port"`
-    Host string `json:"host"`
-}
-
 func loadConfig(data []byte) (*Config, error) {
     var cfg Config
     if err := json.Unmarshal(data, &cfg); err != nil {
         return nil, err
     }
-
-    // Manual validation
     if cfg.Port < 1 || cfg.Port > 65535 {
         return nil, errors.New("invalid port")
     }
     if cfg.Host == "" {
         return nil, errors.New("host required")
     }
-
     return &cfg, nil
 }
 ```
 
-### After
-
+**After:**
 ```go
-import "github.com/vnykmshr/gopantic/pkg/model"
-
 type Config struct {
     Port int    `json:"port" validate:"required,min=1,max=65535"`
     Host string `json:"host" validate:"required"`
@@ -104,68 +79,17 @@ func loadConfig(data []byte) (Config, error) {
 }
 ```
 
-### Benefits
+**Key benefits:** Declarative validation via tags, automatic field names in errors, type coercion (`"8080"` → `8080`).
 
-- Declarative validation via struct tags
-- Validation errors include field names automatically
-- Type coercion for free (`"8080"` → `8080`)
+### From YAML libraries
 
-## From YAML libraries (gopkg.in/yaml.v3)
-
-### Before
-
-```go
-import (
-    "gopkg.in/yaml.v3"
-    "github.com/go-playground/validator/v10"
-)
-
-type Config struct {
-    Database struct {
-        Host string `yaml:"host" validate:"required"`
-        Port int    `yaml:"port" validate:"required,min=1"`
-    } `yaml:"database"`
-}
-
-func loadConfig(data []byte) (*Config, error) {
-    var cfg Config
-
-    if err := yaml.Unmarshal(data, &cfg); err != nil {
-        return nil, err
-    }
-
-    validate := validator.New()
-    if err := validate.Struct(cfg); err != nil {
-        return nil, err
-    }
-
-    return &cfg, nil
-}
-```
-
-### After
-
-```go
-import "github.com/vnykmshr/gopantic/pkg/model"
-
-type Config struct {
-    Database struct {
-        Host string `yaml:"host" validate:"required"`
-        Port int    `yaml:"port" validate:"required,min=1"`
-    } `yaml:"database"`
-}
-
-func loadConfig(data []byte) (Config, error) {
-    // Automatic YAML detection, or use ParseIntoWithFormat for explicit
-    return model.ParseInto[Config](data)
-}
-```
+Replace `yaml.Unmarshal()` + validator with `model.ParseInto[T]()`. Format auto-detected, validation integrated.
 
 ## Migration Checklist
 
 ### 1. Update imports
 
-```diff
+```go
 - import "encoding/json"
 - import "github.com/go-playground/validator/v10"
 + import "github.com/vnykmshr/gopantic/pkg/model"
@@ -173,180 +97,127 @@ func loadConfig(data []byte) (Config, error) {
 
 ### 2. Update validation tags
 
-Most validator tags work as-is, but some differences:
+Most validator tags work as-is:
 
 | validator | gopantic | Notes |
 |-----------|----------|-------|
-| `required` | `required` | Same |
-| `min=5` | `min=5` | Same |
-| `max=100` | `max=100` | Same |
-| `email` | `email` | Similar (simplified regex) |
+| `required`, `min=N`, `max=N` | Same | Compatible |
+| `email` | `email` | Simplified regex |
 | `len=8` | `length=8` | Different name |
 | `eqfield=Password` | Custom | Use cross-field validators |
 | `dive` | N/A | Nested validation automatic |
 
 ### 3. Handle type coercion
 
-gopantic automatically coerces compatible types:
-
+Remove manual string-to-type conversion. gopantic handles automatically:
 ```go
-// Before: Would fail with json.Unmarshal
-{"age": "25"} // string "25"
-
-// After: Works with gopantic
-type User struct {
-    Age int `json:"age"` // Automatically converts "25" → 25
-}
+{"age": "25"}  // Now works with Age int field
 ```
-
-If you have custom string-to-type conversion logic, you can often remove it.
 
 ### 4. Update error handling
 
+**Before:**
 ```go
-// Before: validator returns ValidationErrors
-if err != nil {
-    if validationErrs, ok := err.(validator.ValidationErrors); ok {
-        for _, fieldErr := range validationErrs {
-            fmt.Printf("Field: %s, Error: %s\n", fieldErr.Field(), fieldErr.Tag())
-        }
-    }
-}
-
-// After: gopantic returns structured errors
-if err != nil {
-    // Error message already formatted with field names
-    log.Error(err) // "validation error on field 'Email': must be a valid email address"
-
-    // Or handle structured errors
-    if parseErr, ok := err.(*model.ParseError); ok {
-        fmt.Printf("Field: %s, Type: %s\n", parseErr.Field, parseErr.Type)
+if validationErrs, ok := err.(validator.ValidationErrors); ok {
+    for _, fieldErr := range validationErrs {
+        fmt.Printf("Field: %s, Error: %s\n", fieldErr.Field(), fieldErr.Tag())
     }
 }
 ```
 
-### 5. Handle pointer fields
-
+**After:**
 ```go
-// Before: Use pointers for optional fields
-type User struct {
-    Name  string  `json:"name"`
-    Phone *string `json:"phone,omitempty"` // Optional
-}
+// Errors already formatted: "validation error on field 'Email': must be a valid email"
+log.Error(err)
 
-// After: Same pattern works
-type User struct {
-    Name  string  `json:"name" validate:"required"`
-    Phone *string `json:"phone"` // Optional, no required tag
+// Or type-check structured errors
+if parseErr, ok := err.(*model.ParseError); ok {
+    fmt.Printf("Field: %s, Type: %s\n", parseErr.Field, parseErr.Type)
 }
 ```
 
-## Common Gotchas
+### 5. Update custom validators
 
-### 1. Struct tags order
-
-gopantic tags can appear in any order:
+**Before:**
 ```go
-// Both work
-`json:"name" validate:"required"`
-`validate:"required" json:"name"`
-```
-
-### 2. Zero values vs required
-
-```go
-// This allows zero values (0, false, "")
-type Config struct {
-    Port int `json:"port"` // 0 is valid
-}
-
-// This requires non-zero values
-type Config struct {
-    Port int `json:"port" validate:"required"` // 0 fails validation
-}
-```
-
-### 3. Nested struct validation
-
-Validation is automatic for nested structs:
-
-```go
-type Address struct {
-    City string `json:"city" validate:"required"`
-}
-
-type User struct {
-    Name    string  `json:"name" validate:"required"`
-    Address Address `json:"address"` // City is automatically validated
-}
-```
-
-### 4. Custom validators
-
-```go
-// Before: validator.RegisterValidation
 validate.RegisterValidation("strong_password", func(fl validator.FieldLevel) bool {
     password := fl.Field().String()
     return len(password) >= 8 && hasUpperLower(password)
 })
+```
 
-// After: model.RegisterGlobalFunc
+**After:**
+```go
 model.RegisterGlobalFunc("strong_password", func(fieldName string, value interface{}, params map[string]interface{}) error {
     password, ok := value.(string)
     if !ok || len(password) < 8 || !hasUpperLower(password) {
-        return model.NewValidationError(fieldName, value, "strong_password",
-            "password must be at least 8 characters with upper and lowercase letters")
+        return model.NewValidationError(fieldName, value, "strong_password", "password must be 8+ chars with upper/lowercase")
     }
     return nil
 })
 ```
 
-## Performance Considerations
+## Common Gotchas
 
-### Caching
-
-If you're parsing the same payload repeatedly, use caching:
+### Required vs zero values
 
 ```go
-// Create cached parser once
+Port int `json:"port"`                  // Allows 0
+Port int `json:"port" validate:"required"` // Rejects 0
+```
+
+### Optional fields
+
+Use pointers for optional fields:
+```go
+Phone *string `json:"phone"` // nil = not provided, "" = empty string provided
+```
+
+### Nested validation
+
+Automatic for nested structs. All `validate` tags in nested structs are checked:
+```go
+type User struct {
+    Address Address `json:"address"` // Address fields validated automatically
+}
+```
+
+### Tag order
+
+Tags can appear in any order: `json:"name" validate:"required"` or `validate:"required" json:"name"`
+
+## Performance Tips
+
+### Caching for repeated parsing
+
+```go
 parser := model.NewCachedParser[User](nil)
 defer parser.Close()
 
-// Reuse for multiple parses
 user1, _ := parser.Parse(data) // Cache miss
-user2, _ := parser.Parse(data) // Cache hit - faster
+user2, _ := parser.Parse(data) // Cache hit
 ```
 
 ### Input size limits
 
-For untrusted input, configure max size:
+```go
+model.MaxInputSize = 5 * 1024 * 1024  // 5MB limit
+model.MaxInputSize = 0                 // No limit
+```
+
+### Validation depth control
 
 ```go
-// Set global limit (default 10MB)
-model.MaxInputSize = 5 * 1024 * 1024 // 5MB
-
-// Or disable for large files
-model.MaxInputSize = 0 // No limit
+model.MaxValidationDepth = 32  // Default, prevents stack overflow
 ```
 
 ## Getting Help
 
-If you encounter issues during migration:
+If you encounter migration issues:
 
-1. Check the [API documentation](api.md) for specific function details
+1. Check [API documentation](api.md) for function details
 2. Review [examples](../examples/) for common patterns
-3. File an issue at https://github.com/vnykmshr/gopantic/issues with:
-   - Your current code (before migration)
-   - The error or unexpected behavior
+3. File issues at https://github.com/vnykmshr/gopantic/issues with:
+   - Current code before migration
+   - Error or unexpected behavior
    - Go version and gopantic version
-
-## Quick Reference
-
-| Task | encoding/json + validator | gopantic |
-|------|---------------------------|----------|
-| Parse JSON | `json.Unmarshal()` + `validate.Struct()` | `model.ParseInto[T]()` |
-| Parse YAML | `yaml.Unmarshal()` + `validate.Struct()` | `model.ParseInto[T]()` |
-| Type coercion | Manual | Automatic |
-| Validation | Separate step | Integrated |
-| Custom validators | `RegisterValidation()` | `RegisterGlobalFunc()` |
-| Error handling | `ValidationErrors` type | Structured error types |

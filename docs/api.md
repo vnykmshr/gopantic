@@ -10,22 +10,9 @@ Complete API documentation for gopantic.
 func ParseInto[T any](data []byte) (T, error)
 ```
 
-Parses JSON or YAML data into a struct with automatic format detection.
+Parses JSON or YAML with automatic format detection, type coercion, and validation.
 
-Parameters:
-- `data []byte` - Raw JSON or YAML data
-
-Returns:
-- `T` - Parsed struct of type T
-- `error` - Parse, coercion, or validation errors
-
-Example:
 ```go
-type User struct {
-    ID   int    `json:"id"`
-    Name string `json:"name"`
-}
-
 user, err := model.ParseInto[User]([]byte(`{"id": 1, "name": "Alice"}`))
 ```
 
@@ -35,19 +22,24 @@ user, err := model.ParseInto[User]([]byte(`{"id": 1, "name": "Alice"}`))
 func ParseIntoWithFormat[T any](data []byte, format Format) (T, error)
 ```
 
-Parses data with explicit format specification.
+Parses with explicit format (`FormatJSON` or `FormatYAML`).
 
-Parameters:
-- `data []byte` - Raw data
-- `format Format` - `FormatJSON` or `FormatYAML`
-
-Returns:
-- `T` - Parsed struct of type T
-- `error` - Parse, coercion, or validation errors
-
-Example:
 ```go
 user, err := model.ParseIntoWithFormat[User](yamlData, model.FormatYAML)
+```
+
+### Validate
+
+```go
+func Validate[T any](v *T) error
+```
+
+Validates an already-parsed struct.
+
+```go
+var user User
+json.Unmarshal(data, &user)
+err := model.Validate(&user)
 ```
 
 ## Format Detection
@@ -58,18 +50,7 @@ user, err := model.ParseIntoWithFormat[User](yamlData, model.FormatYAML)
 func DetectFormat(data []byte) Format
 ```
 
-Automatically detects data format.
-
-Parameters:
-- `data []byte` - Raw data
-
-Returns:
-- `Format` - Detected format (`FormatJSON` or `FormatYAML`)
-
-Algorithm:
-- Looks for JSON markers (`{`, `[`)
-- Looks for YAML markers (`---`, `:`)
-- Defaults to JSON for ambiguous cases
+Auto-detects JSON or YAML format. Looks for JSON markers (`{`, `[`), YAML markers (`---`, `:`), defaults to JSON for ambiguous cases.
 
 ## Caching
 
@@ -79,69 +60,25 @@ Algorithm:
 func NewCachedParser[T any](config *CacheConfig) (*CachedParser[T], error)
 ```
 
-Creates a new cached parser instance.
+Creates a cached parser instance.
 
-Parameters:
-- `config *CacheConfig` - Cache configuration (nil for defaults)
-
-Returns:
-- `*CachedParser[T]` - Parser instance with caching
-- `error` - Configuration validation errors
-
-Example:
 ```go
 config := &model.CacheConfig{
     TTL:        5 * time.Minute,
     MaxEntries: 1000,
-    Namespace:  "users",
 }
 parser, err := model.NewCachedParser[User](config)
 defer parser.Close()
 ```
 
-### CachedParser.Parse
+### CachedParser Methods
 
 ```go
 func (cp *CachedParser[T]) Parse(data []byte) (T, error)
-```
-
-Parses data with caching support.
-
-Parameters:
-- `data []byte` - Raw data
-
-Returns:
-- `T` - Parsed struct (from cache or fresh parse)
-- `error` - Parse, coercion, or validation errors
-
-### CachedParser.Stats
-
-```go
 func (cp *CachedParser[T]) Stats() (size, maxSize int, hitRate float64)
-```
-
-Returns cache statistics.
-
-Returns:
-- `size int` - Current cache entries
-- `maxSize int` - Maximum cache entries
-- `hitRate float64` - Cache hit rate percentage
-
-### CachedParser.ClearCache
-
-```go
 func (cp *CachedParser[T]) ClearCache()
+func (cp *CachedParser[T]) Close()
 ```
-
-Clears all cache entries.
-
-### ParseIntoCached
-
-```go
-func ParseIntoCached[T any](data []byte) (T, error)
-```
-
-Convenient cached parsing (currently falls back to non-cached).
 
 ## Configuration
 
@@ -149,134 +86,88 @@ Convenient cached parsing (currently falls back to non-cached).
 
 ```go
 type CacheConfig struct {
-    TTL        time.Duration // Cache entry lifetime
-    MaxEntries int           // Maximum cache entries  
-    Namespace  string        // Cache key namespace
+    TTL             time.Duration // Default: 30 minutes
+    MaxEntries      int           // Default: 1000
+    Namespace       string        // Default: "gopantic"
+    CleanupInterval time.Duration // Default: 5 minutes
 }
 ```
 
-Default Values:
-- TTL: 30 minutes
-- MaxEntries: 1000
-- Namespace: "gopantic"
+### Global Variables
+
+```go
+var MaxInputSize = 10 * 1024 * 1024  // Max 10MB input (0 = unlimited)
+var MaxCacheSize = 1000               // Max validation metadata cache (0 = unlimited)
+var MaxValidationDepth = 32           // Max nested struct depth (0 = unlimited)
+```
 
 ## Validation Tags
 
-### Required
+### Built-in Validators
 
-```go
-`validate:"required"`
-```
-
-Field must have a non-zero value.
-
-Applies to: All types
-Error: "field is required"
-
-### Min/Max (Numbers)
-
-```go
-`validate:"min=10"`
-`validate:"max=100"`
-`validate:"min=1,max=10"`
-```
-
-Numeric value constraints.
-
-Applies to: `int`, `float64`, and variants
-Error: "value must be at least N" / "value must be at most N"
-
-### Min/Max (Strings/Slices)
-
-```go
-`validate:"min=3"`      // Minimum length
-`validate:"max=50"`     // Maximum length
-```
-
-Length constraints for strings and slices.
-
-Applies to: `string`, `[]T`
-Error: "length must be at least N" / "length must be at most N"
-
-### Length
-
-```go
-`validate:"length=8"`
-```
-
-Exact length requirement.
-
-Applies to: `string`, `[]T`
-Error: "length must be exactly N characters"
-
-### Email
-
-```go
-`validate:"email"`
-```
-
-Valid email format validation.
-
-Applies to: `string`
-Error: "must be a valid email address"
-
-### Alpha
-
-```go
-`validate:"alpha"`
-```
-
-Alphabetic characters only (a-z, A-Z).
-
-Applies to: `string`
-Error: "must contain only alphabetic characters"
-
-### Alphanum
-
-```go
-`validate:"alphanum"`
-```
-
-Alphanumeric characters only (a-z, A-Z, 0-9).
-
-Applies to: `string`
-Error: "must contain only alphanumeric characters"
+| Tag | Applies To | Description | Example |
+|-----|------------|-------------|---------|
+| `required` | All types | Non-zero value required | `validate:"required"` |
+| `min=N` | Numbers | Minimum value | `validate:"min=1"` |
+| `max=N` | Numbers | Maximum value | `validate:"max=100"` |
+| `min=N` | String, Slice | Minimum length | `validate:"min=3"` |
+| `max=N` | String, Slice | Maximum length | `validate:"max=50"` |
+| `length=N` | String, Slice | Exact length | `validate:"length=8"` |
+| `email` | String | Valid email format | `validate:"email"` |
+| `alpha` | String | Alphabetic only (a-z, A-Z) | `validate:"alpha"` |
+| `alphanum` | String | Alphanumeric only | `validate:"alphanum"` |
 
 ### Combined Rules
 
 ```go
-`validate:"required,min=3,max=20,alphanum"`
+type User struct {
+    Name string `json:"name" validate:"required,min=2,max=50,alpha"`
+    Age  int    `json:"age" validate:"required,min=18,max=120"`
+}
 ```
 
-Multiple validation rules separated by commas.
+### Custom Validators
+
+```go
+model.RegisterGlobalFunc("strong_password", func(fieldName string, value interface{}, params map[string]interface{}) error {
+    password, ok := value.(string)
+    if !ok || len(password) < 8 {
+        return model.NewValidationError(fieldName, value, "strong_password", "password must be at least 8 characters")
+    }
+    return nil
+})
+```
+
+### Cross-Field Validators
+
+```go
+model.RegisterGlobalCrossFieldFunc("password_match", func(fieldName string, fieldValue interface{}, structValue reflect.Value, params map[string]interface{}) error {
+    password := structValue.FieldByName("Password").Interface().(string)
+    confirmPassword := fieldValue.(string)
+    if password != confirmPassword {
+        return model.NewValidationError(fieldName, fieldValue, "password_match", "passwords do not match")
+    }
+    return nil
+})
+```
 
 ## Type Coercion
 
-### Automatic Coercion
+Automatic conversion between compatible types:
 
-gopantic automatically converts between compatible types:
-
-| Target Type | From Types | Examples |
-|-------------|------------|----------|
+| Target | From | Examples |
+|--------|------|----------|
 | `int` | `string`, `float64` | `"42"` → `42`, `42.0` → `42` |
 | `float64` | `string`, `int` | `"3.14"` → `3.14`, `42` → `42.0` |
 | `bool` | `string`, `int` | `"true"` → `true`, `1` → `true` |
-| `string` | `int`, `float64`, `bool` | `42` → `"42"`, `true` → `"true"` |
+| `string` | Any | `42` → `"42"`, `true` → `"true"` |
 | `time.Time` | `string`, `int` | RFC3339, Unix timestamps |
 
-### Boolean Coercion
+**Boolean coercion:**
+- Truthy: `"true"`, `"yes"`, `"1"`, `"on"`, `1`, non-zero
+- Falsy: `"false"`, `"no"`, `"0"`, `"off"`, `""`, `0`
 
-Truthy values: `"true"`, `"yes"`, `"1"`, `"on"`, `1`, non-zero numbers
-Falsy values: `"false"`, `"no"`, `"0"`, `"off"`, `""`, `0`, zero values
-
-### Time Parsing
-
-Supports multiple time formats:
-- **RFC3339** - `"2023-01-15T10:30:00Z"`
-- **RFC3339Nano** - `"2023-01-15T10:30:00.123456789Z"`
-- **Date only** - `"2023-01-15"`
-- **Unix timestamp** - `1673781000` (integer)
-- **Unix timestamp** - `1673781000.123` (float)
+**Time formats:** RFC3339, RFC3339Nano, Date only (`2023-01-15`), Unix timestamp (int/float)
 
 ## Error Types
 
@@ -284,10 +175,10 @@ Supports multiple time formats:
 
 ```go
 type ParseError struct {
-    Field   string      // Field name
-    Value   interface{} // Problematic value
-    Type    string      // Target type
-    Message string      // Error description
+    Field   string
+    Value   interface{}
+    Type    string
+    Message string
 }
 ```
 
@@ -297,10 +188,10 @@ Returned for type coercion failures.
 
 ```go
 type ValidationError struct {
-    Field   string      // Field name
-    Value   interface{} // Invalid value  
-    Rule    string      // Validation rule
-    Message string      // Error description
+    Field   string
+    Value   interface{}
+    Rule    string
+    Message string
 }
 ```
 
@@ -308,47 +199,29 @@ Returned for validation failures.
 
 ### Multiple Errors
 
-When multiple errors occur, they're aggregated:
+Aggregated as: `"multiple errors: validation error on field 'ID': field is required; parse error on field 'Age': cannot convert string 'invalid' to integer"`
 
-```
-"multiple errors: validation error on field 'ID': field is required; parse error on field 'Age': cannot convert string 'invalid' to integer"
-```
+### Security: Error Messages
 
-### Security Consideration: Error Messages
+**Important:** Error messages include field values. Sanitize before logging/displaying:
 
-**Important**: Error messages include field names and the actual values that failed validation or parsing. For example:
-- `ParseError` contains the invalid value in the `Value` field
-- `ValidationError` includes the field value that failed validation
-- Error messages may include sensitive data in their descriptions
-
-When handling errors in production:
-- Be cautious when logging errors that may contain sensitive data (passwords, tokens, PII)
-- Consider sanitizing error messages before displaying them to end users
-- Use structured logging that can filter sensitive fields
-- For API responses, you may want to return generic error messages while logging detailed errors internally
-
-Example of safe error handling:
 ```go
 user, err := model.ParseInto[User](data)
 if err != nil {
-    // Internal logging - includes full details
-    log.Error("parse failed", "error", err)
-
-    // User-facing response - sanitized
-    return errors.New("invalid request data")
+    log.Error("parse failed", "error", err)  // Internal: full details
+    return errors.New("invalid request")      // External: sanitized
 }
 ```
 
-## Struct Tag Support
+## Struct Tags
 
 ### JSON Tags
 
 ```go
 type User struct {
-    ID       int    `json:"id"`           // Maps to "id"
-    Username string `json:"username"`     // Maps to "username"  
-    Hidden   string `json:"-"`            // Ignored
-    Count    int    `json:"count,omitempty"` // Standard options supported
+    ID     int    `json:"id"`
+    Name   string `json:"name,omitempty"`
+    Hidden string `json:"-"`  // Ignored
 }
 ```
 
@@ -356,39 +229,29 @@ type User struct {
 
 ```go
 type Config struct {
-    Port int `yaml:"port" json:"port"` // Supports both formats
-    Host string `yaml:"host"`          // YAML-specific
+    Port int    `yaml:"port" json:"port"`  // Both formats
+    Host string `yaml:"host"`               // YAML only
 }
 ```
 
-**Fallback behavior:** If YAML tag is missing, falls back to JSON tag.
-
-### Validation Tags
-
-```go
-type Product struct {
-    SKU   string  `json:"sku" validate:"required,length=8,alphanum"`
-    Price float64 `json:"price" validate:"required,min=0.01"`
-}
-```
+Falls back to JSON tag if YAML tag is missing.
 
 ## Best Practices
 
 ### Performance
 
-1. **Use caching** for repeated parsing of similar data
-2. **Specify format explicitly** when known for slight performance gain
-3. **Minimize validation rules** - only validate what's necessary
-4. **Reuse parser instances** in high-throughput scenarios
+- Use `NewCachedParser` for repeated parsing
+- Specify format explicitly when known
+- Minimize validation rules
+- Reuse parser instances
 
 ### Error Handling
 
 ```go
 user, err := model.ParseInto[User](data)
 if err != nil {
-    // Handle specific error types
     if parseErr, ok := err.(*model.ParseError); ok {
-        log.Printf("Parse error in field %s: %s", parseErr.Field, parseErr.Message)
+        log.Printf("Parse error in %s: %s", parseErr.Field, parseErr.Message)
     }
     return err
 }
@@ -397,31 +260,32 @@ if err != nil {
 ### Memory Management
 
 ```go
-// For high-throughput scenarios
 parser := model.NewCachedParser[User](nil)
-defer parser.Close() // Important: cleanup resources
+defer parser.Close()  // Cleanup resources
 
-// Process many requests
 for data := range dataChannel {
     user, err := parser.Parse(data)
-    // ... handle result
+    // ... handle
 }
 ```
 
 ### Struct Design
 
 ```go
-// Good: Clear, validated struct
 type User struct {
-    ID       int       `json:"id" validate:"required,min=1"`
-    Email    string    `json:"email" validate:"required,email"`
-    Name     string    `json:"name" validate:"required,min=2,max=50"`
-    Age      *int      `json:"age,omitempty" validate:"min=0,max=150"` // Optional field
-    Created  time.Time `json:"created_at"`
-}
-
-// Avoid: Over-validation
-type OverValidated struct {
-    ID string `json:"id" validate:"required,min=1,max=100,alphanum,length=8"` // Conflicting rules
+    ID      int       `json:"id" validate:"required,min=1"`
+    Email   string    `json:"email" validate:"required,email"`
+    Name    string    `json:"name" validate:"required,min=2,max=50"`
+    Age     *int      `json:"age,omitempty" validate:"min=0,max=150"` // Optional
+    Created time.Time `json:"created_at"`
 }
 ```
+
+Use pointers for optional fields to distinguish nil from zero value.
+
+## See Also
+
+- [Type Reference](type-reference.md) - Supported types and limitations
+- [Migration Guide](migration.md) - Switching from other libraries
+- [Architecture](architecture.md) - Implementation details
+- [Examples](../examples/) - Working code examples

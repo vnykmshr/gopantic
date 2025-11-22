@@ -4,9 +4,9 @@
 
 Currently supported versions with security updates:
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.0.x   | :white_check_mark: |
+| Version | Supported |
+| ------- | --------- |
+| 1.0.x   | Yes       |
 
 ## Reporting a Vulnerability
 

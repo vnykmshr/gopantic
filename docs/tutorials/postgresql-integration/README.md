@@ -5,11 +5,11 @@ This example demonstrates how to use gopantic with PostgreSQL JSONB columns for 
 ## Overview
 
 The example shows:
-- ✅ Parsing and validating JSON input with `json.RawMessage` fields
-- ✅ Type-safe metadata access via helper methods
-- ✅ PostgreSQL JSONB storage and queries
-- ✅ Partial metadata updates using JSONB operators
-- ✅ Two-phase validation (standard library + gopantic)
+- Parsing and validating JSON input with `json.RawMessage` fields
+- Type-safe metadata access via helper methods
+- PostgreSQL JSONB storage and queries
+- Partial metadata updates using JSONB operators
+- Two-phase validation (standard library + gopantic)
 
 ## Running the Example
 
