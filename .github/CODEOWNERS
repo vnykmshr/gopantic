@@ -1,0 +1,15 @@
+# This file defines code ownership for the gopantic project
+# GitHub will automatically request reviews from code owners when PRs are opened
+
+# Default owner for everything in the repo
+* @vnykmshr
+
+# Core library code
+/pkg/ @vnykmshr
+
+# Documentation
+/docs/ @vnykmshr
+*.md @vnykmshr
+
+# CI/CD workflows
+/.github/ @vnykmshr

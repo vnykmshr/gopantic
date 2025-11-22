@@ -138,9 +138,10 @@ func TestParseInto(t *testing.T) {
 
 ### Coverage Requirements
 
-- New code must maintain >90% test coverage
+- New code should maintain >70% test coverage
 - Run `make coverage` to generate and view coverage reports
 - Critical paths (parsing, validation) should have 100% coverage
+- Current project coverage: ~54% (contributions to improve coverage are welcome!)
 
 ## Documentation
 

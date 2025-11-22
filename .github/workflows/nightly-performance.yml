@@ -7,22 +7,12 @@ on:
   workflow_dispatch: # Allow manual trigger
 
 env:
-  GO_VERSION: '1.21'
+  GO_VERSION: '1.25'
 
 jobs:
   performance-monitoring:
     name: Performance Monitoring
     runs-on: ubuntu-latest
-    services:
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
 
     steps:
     - name: Checkout code
@@ -80,8 +70,6 @@ jobs:
         
         echo "---" >> performance_report.md
         echo "*Generated on $(date) by GitHub Actions*" >> performance_report.md
-      env:
-        REDIS_URL: localhost:6379
 
     - name: Run profiling benchmarks
       run: |
