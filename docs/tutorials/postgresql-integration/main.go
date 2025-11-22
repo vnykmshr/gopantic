@@ -1,3 +1,4 @@
+// Package main demonstrates PostgreSQL JSONB integration with gopantic.
 package main
 
 import (
