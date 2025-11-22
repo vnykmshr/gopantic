@@ -12,7 +12,7 @@ This guide covers how to integrate gopantic with databases, with a focus on Post
 
 ## PostgreSQL JSONB Integration
 
-PostgreSQL's JSONB type is perfect for storing flexible, schema-less data. gopantic's `json.RawMessage` support (v1.2.0+) makes JSONB integration seamless.
+PostgreSQL's JSONB type is perfect for storing flexible, schema-less data. gopantic's `json.RawMessage` support makes JSONB integration seamless.
 
 ### Basic JSONB Pattern
 

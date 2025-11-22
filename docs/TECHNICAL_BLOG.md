@@ -293,6 +293,52 @@ graph LR
 | Simple YAML | 20.8μs | 1.5μs | 13.7x |
 | Complex YAML | 69.4μs | 2.6μs | 27.2x |
 
+### 6. Hybrid Unmarshal Strategy
+
+gopantic employs a two-phase parsing approach that works with standard library patterns:
+
+1. **Try standard library first**: Use `encoding/json` or `encoding/yaml` directly
+2. **Apply selective coercion**: Only coerce fields that need it (e.g., `"123"` to `int`)
+3. **Fallback to map-based**: For complex type mismatches, use map-based coercion
+
+This strategy handles `json.RawMessage` correctly for PostgreSQL JSONB integration:
+
+```go
+type Account struct {
+    Name        string          `json:"name" validate:"required"`
+    MetadataRaw json.RawMessage `json:"metadata,omitempty"`
+}
+
+// Works seamlessly with json.RawMessage
+account, err := model.ParseInto[Account](body)
+```
+
+Common use cases:
+- PostgreSQL JSONB storage
+- Multi-tenant configurations
+- Plugin systems with varying schemas
+- Event payloads with dynamic structures
+
+### 7. Standalone Validation
+
+gopantic can validate structs populated from any source, not just parsed data:
+
+```go
+// Pattern 1: Standard library unmarshal + gopantic validation
+var account Account
+json.Unmarshal(body, &account)  // Handles json.RawMessage perfectly
+model.Validate(&account)         // Apply validation rules
+
+// Pattern 2: All-in-one parsing and validation
+account, err := model.ParseInto[Account](body)
+```
+
+This enables validation of data from:
+- Database queries (already deserialized)
+- Environment variables
+- Custom unmarshaling logic
+- In-memory struct construction
+
 ## Real-World Applications
 
 ### Use Case 1: API Request Validation
@@ -403,19 +449,19 @@ Comparing gopantic with standard library JSON parsing plus separate validation:
 
 ### Good Fit
 
-✓ **API services** validating user input
-✓ **Configuration parsing** for applications and services
-✓ **Webhook handlers** processing third-party payloads
-✓ **Data pipelines** transforming semi-structured data
-✓ **Microservices** with consistent validation requirements
+**API services** validating user input
+**Configuration parsing** for applications and services
+**Webhook handlers** processing third-party payloads
+**Data pipelines** transforming semi-structured data
+**Microservices** with consistent validation requirements
 
 ### Poor Fit
 
-✗ **Ultra-high-frequency trading** where microseconds matter
-✗ **Embedded systems** with tight memory constraints
-✗ **Custom serialization formats** (Protocol Buffers, MessagePack)
-✗ **Streaming large datasets** (use streaming JSON parsers)
-✗ **Financial calculations** requiring exact decimal precision
+**Ultra-high-frequency trading** where microseconds matter
+**Embedded systems** with tight memory constraints
+**Custom serialization formats** (Protocol Buffers, MessagePack)
+**Streaming large datasets** (use streaming JSON parsers)
+**Financial calculations** requiring exact decimal precision
 
 ## Lessons Learned
 

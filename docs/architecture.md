@@ -211,11 +211,11 @@ Benchmarks show significant speedups for **identical** inputs:
 | Complex YAML | 69.4μs | 2.6μs | 27.2x |
 
 **When to use caching:**
-- ✅ Parsing static configuration files repeatedly
-- ✅ Retrying identical failed requests
-- ✅ Processing duplicate messages in queues
-- ❌ Parsing unique API requests (same schema, different data)
-- ❌ Streaming different records from a file
+- Good fit: Parsing static configuration files repeatedly
+- Good fit: Retrying identical failed requests
+- Good fit: Processing duplicate messages in queues
+- Poor fit: Parsing unique API requests (same schema, different data)
+- Poor fit: Streaming different records from a file
 
 **Monitoring:** Use `Stats()` to check hit rate and adjust strategy accordingly.
 

@@ -177,13 +177,13 @@ Most validator tags work as-is, but some differences:
 
 | validator | gopantic | Notes |
 |-----------|----------|-------|
-| `required` | `required` | ✅ Same |
-| `min=5` | `min=5` | ✅ Same |
-| `max=100` | `max=100` | ✅ Same |
-| `email` | `email` | ✅ Similar (simplified regex) |
-| `len=8` | `length=8` | ⚠️ Different name |
-| `eqfield=Password` | Custom | ⚠️ Use cross-field validators |
-| `dive` | N/A | ⚠️ Nested validation automatic |
+| `required` | `required` | Same |
+| `min=5` | `min=5` | Same |
+| `max=100` | `max=100` | Same |
+| `email` | `email` | Similar (simplified regex) |
+| `len=8` | `length=8` | Different name |
+| `eqfield=Password` | Custom | Use cross-field validators |
+| `dive` | N/A | Nested validation automatic |
 
 ### 3. Handle type coercion
 
