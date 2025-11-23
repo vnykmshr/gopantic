@@ -210,8 +210,8 @@ jobs:
       run: |
         echo "Testing examples..."
         cd examples/quickstart && go run main.go
-        cd ../api_validation && go run main.go
-        cd ../yaml && go run main.go
+        echo "Skipping api_validation (interactive server demo)"
+        cd examples/yaml && go run main.go
         cd ../cache_demo && go run main.go
         cd ../pointers && go run main.go
         cd ../cross_field_validation && go run main.go
