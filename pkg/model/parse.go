@@ -118,8 +118,12 @@ func ParseIntoWithFormat[T any](raw []byte, format Format) (T, error) {
 
 	if unmarshalErr == nil {
 		// Standard unmarshal succeeded; validate and return
-		if err := Validate(&result); err != nil {
-			return zero, err
+		// Only validate if T is a struct type
+		val := reflect.ValueOf(&result).Elem()
+		if val.Kind() == reflect.Struct {
+			if err := Validate(&result); err != nil {
+				return zero, err
+			}
 		}
 		return result, nil
 	}
