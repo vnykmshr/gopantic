@@ -203,7 +203,7 @@ func (el ErrorList) ToStructuredReport() *StructuredErrorReport {
 	fieldErrors := make([]FieldError, 0, len(fieldGroups))
 
 	for fieldPath, validationErrors := range fieldGroups {
-		var errorInfos []ValidationErrorInfo
+		errorInfos := make([]ValidationErrorInfo, 0, len(validationErrors))
 		var field string
 		var value interface{}
 
