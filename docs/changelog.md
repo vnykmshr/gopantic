@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-01-19
+
+### Security
+
+- **Structure depth limit**: Added `MaxStructureDepth` configuration (default: 64) to protect against deeply nested JSON/YAML causing resource exhaustion
+- **Sensitive field sanitization**: New `SanitizedValue()` method on `ValidationError` automatically redacts sensitive field values (passwords, tokens, API keys) in error output
+- **Configurable patterns**: Thread-safe `GetSensitiveFieldPatterns()`, `SetSensitiveFieldPatterns()`, and `AddSensitiveFieldPattern()` for customizing sensitive field detection
+
+### Added
+
+- **Fuzzing tests**: 7 fuzz targets for parser and coercion edge case discovery
+- **Validator registry tests**: Comprehensive coverage for all 7 registry methods
+- **Depth limit tests**: Tests for JSON and YAML depth enforcement
+- **Benchmark comparison document**: Performance comparison with go-playground/validator
+
+### Changed
+
+- **ToStructuredReport()**: Now uses sanitized values for sensitive fields
+- **Error handling**: `IsSensitiveField()` exported for custom sanitization logic
+
+### Documentation
+
+- **Fixed validator documentation**: Corrected docs to accurately reflect built-in validators (removed non-existent validators like `url`, `uuid`, `oneof`)
+- **Benchmark guide**: New `docs/benchmarks.md` with methodology and results
+- **Validation guide**: Clarified custom validator registration patterns
+
+### Testing
+
+- Added `go-playground/validator/v10` as test dependency for comparison benchmarks
+- Fuzzing tests exercise ParseInto and CoerceValue with various input patterns
+- Registry tests verify validator registration and factory patterns
+
+---
+
 ## [1.3.0] - 2026-01-19
 
 ### Security
