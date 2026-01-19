@@ -35,6 +35,14 @@ type fieldKeyCacheKey struct {
 // For concurrent access, use GetMaxInputSize() and SetMaxInputSize().
 var MaxInputSize = 10 * 1024 * 1024 // 10MB
 
+// MaxStructureDepth is the default maximum nesting depth for parsed structures (64).
+// Set to 0 to disable depth checking. This prevents resource exhaustion
+// from deeply nested JSON/YAML structures.
+//
+// WARNING: Direct modification of this variable is NOT thread-safe.
+// For concurrent access, use GetMaxStructureDepth() and SetMaxStructureDepth().
+var MaxStructureDepth = 64
+
 // getOrCacheValidation retrieves cached validation tags or parses and caches them
 func getOrCacheValidation(typ reflect.Type) *StructValidation {
 	if cached, ok := validationCache.Load(typ); ok {
@@ -114,6 +122,11 @@ func ParseIntoWithFormat[T any](raw []byte, format Format) (T, error) {
 		return zero, fmt.Errorf("input size %d bytes exceeds maximum allowed size %d bytes", len(raw), maxSize)
 	}
 
+	// Check structure depth to prevent resource exhaustion from deeply nested input
+	if err := checkRawStructureDepth(raw, format); err != nil {
+		return zero, err
+	}
+
 	// Strategy: Try standard unmarshal first (handles json.RawMessage, custom UnmarshalJSON, etc.)
 	// If that succeeds, apply selective coercion only where needed
 	// If it fails (due to type mismatches), fall back to map-based coercion
@@ -148,6 +161,22 @@ func unmarshalByFormat(raw []byte, v interface{}, format Format) error {
 	default:
 		return fmt.Errorf("unsupported format: %v", format)
 	}
+}
+
+// checkRawStructureDepth parses raw bytes and checks if the structure depth exceeds the limit.
+// This is called early in parsing to reject deeply nested input before expensive processing.
+func checkRawStructureDepth(raw []byte, format Format) error {
+	maxDepth := GetMaxStructureDepth()
+	if maxDepth <= 0 {
+		return nil // depth checking disabled
+	}
+
+	// Parse into generic interface{} to check structure depth
+	// Note: parser.Parse already calls checkStructureDepth internally,
+	// so this will return the depth error if the structure is too deep
+	parser := GetParser(format)
+	_, err := parser.Parse(raw)
+	return err
 }
 
 // parseWithMapCoercion is the fallback parser that uses map-based coercion

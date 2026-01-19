@@ -28,6 +28,7 @@ var configValues struct {
 	maxInputSize       int
 	maxCacheSize       int
 	maxValidationDepth int
+	maxStructureDepth  int
 }
 
 // initConfigOnce ensures configuration is initialized from exported variables
@@ -36,6 +37,7 @@ func initConfigOnce() {
 		configValues.maxInputSize = MaxInputSize
 		configValues.maxCacheSize = MaxCacheSize
 		configValues.maxValidationDepth = MaxValidationDepth
+		configValues.maxStructureDepth = MaxStructureDepth
 	})
 }
 
@@ -103,4 +105,26 @@ func SetMaxValidationDepth(depth int) {
 	defer configMu.Unlock()
 	configValues.maxValidationDepth = depth
 	MaxValidationDepth = depth
+}
+
+// GetMaxStructureDepth returns the maximum structure nesting depth in a thread-safe manner.
+// Default: 64 levels. Set to 0 to disable depth checking.
+func GetMaxStructureDepth() int {
+	initConfigOnce()
+	configMu.RLock()
+	defer configMu.RUnlock()
+	return configValues.maxStructureDepth
+}
+
+// SetMaxStructureDepth sets the maximum structure nesting depth in a thread-safe manner.
+// This prevents resource exhaustion from deeply nested JSON/YAML structures.
+//
+// Note: This also updates the exported MaxStructureDepth variable for compatibility,
+// but that update is not atomic with respect to direct variable reads.
+func SetMaxStructureDepth(depth int) {
+	initConfigOnce()
+	configMu.Lock()
+	defer configMu.Unlock()
+	configValues.maxStructureDepth = depth
+	MaxStructureDepth = depth
 }

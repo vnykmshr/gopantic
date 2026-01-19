@@ -39,6 +39,10 @@ func (jp *JSONParser) Parse(raw []byte) (interface{}, error) {
 	if err := json.Unmarshal(raw, &data); err != nil {
 		return nil, fmt.Errorf("json parse error: %w", err)
 	}
+	// Check structure depth to prevent resource exhaustion
+	if err := checkStructureDepth(data); err != nil {
+		return nil, err
+	}
 	return data, nil
 }
 
@@ -56,6 +60,10 @@ func (yp *YAMLParser) Parse(raw []byte) (interface{}, error) {
 	var data interface{}
 	if err := yaml.Unmarshal(raw, &data); err != nil {
 		return nil, fmt.Errorf("yaml parse error: %w", err)
+	}
+	// Check structure depth to prevent resource exhaustion
+	if err := checkStructureDepth(data); err != nil {
+		return nil, err
 	}
 	return data, nil
 }
@@ -186,6 +194,43 @@ func trimLeadingSpace(s string) string {
 		i++
 	}
 	return s[i:]
+}
+
+// checkStructureDepth validates that a parsed structure does not exceed the maximum depth.
+// Returns an error if the structure is too deeply nested.
+func checkStructureDepth(data interface{}) error {
+	maxDepth := GetMaxStructureDepth()
+	if maxDepth <= 0 {
+		return nil // depth checking disabled
+	}
+	return checkDepth(data, 1, maxDepth)
+}
+
+// checkDepth recursively checks the depth of a parsed structure.
+// Only containers (maps and arrays) count as depth levels; primitives don't add depth.
+func checkDepth(v interface{}, currentDepth, maxDepth int) error {
+	switch val := v.(type) {
+	case map[string]interface{}:
+		if currentDepth > maxDepth {
+			return fmt.Errorf("structure depth %d exceeds maximum allowed depth of %d", currentDepth, maxDepth)
+		}
+		for _, child := range val {
+			if err := checkDepth(child, currentDepth+1, maxDepth); err != nil {
+				return err
+			}
+		}
+	case []interface{}:
+		if currentDepth > maxDepth {
+			return fmt.Errorf("structure depth %d exceeds maximum allowed depth of %d", currentDepth, maxDepth)
+		}
+		for _, child := range val {
+			if err := checkDepth(child, currentDepth+1, maxDepth); err != nil {
+				return err
+			}
+		}
+	}
+	// Primitives (string, int, bool, nil, etc.) don't contribute to nesting depth
+	return nil
 }
 
 // GetParser returns the appropriate parser instance for the given format.
