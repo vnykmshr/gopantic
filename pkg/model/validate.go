@@ -389,7 +389,8 @@ func ParseValidationTags(structType reflect.Type) *StructValidation {
 
 // storeInValidationCache stores validation metadata in the cache with size limit enforcement.
 func storeInValidationCache(structType reflect.Type, validation *StructValidation) {
-	if MaxCacheSize == 0 {
+	maxCacheSize := GetMaxCacheSize()
+	if maxCacheSize == 0 {
 		// Unlimited caching
 		validationCache.Store(structType, validation)
 		return
@@ -399,7 +400,7 @@ func storeInValidationCache(structType reflect.Type, validation *StructValidatio
 	defer cacheOrderMutex.Unlock()
 
 	// Check if cache is full
-	if len(cacheOrder) >= MaxCacheSize {
+	if len(cacheOrder) >= maxCacheSize {
 		// Remove oldest entry (FIFO)
 		oldest := cacheOrder[0]
 		validationCache.Delete(oldest)

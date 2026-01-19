@@ -82,8 +82,9 @@ func getOrCacheValidation(typ reflect.Type) *StructValidation {
 func ParseInto[T any](raw []byte) (T, error) {
 	// Check input size
 	var zero T
-	if MaxInputSize > 0 && len(raw) > MaxInputSize {
-		return zero, fmt.Errorf("input size %d bytes exceeds maximum allowed size %d bytes", len(raw), MaxInputSize)
+	maxSize := GetMaxInputSize()
+	if maxSize > 0 && len(raw) > maxSize {
+		return zero, fmt.Errorf("input size %d bytes exceeds maximum allowed size %d bytes", len(raw), maxSize)
 	}
 
 	// Auto-detect format and use appropriate parser
@@ -108,8 +109,9 @@ func ParseIntoWithFormat[T any](raw []byte, format Format) (T, error) {
 	var zero T
 
 	// Check input size
-	if MaxInputSize > 0 && len(raw) > MaxInputSize {
-		return zero, fmt.Errorf("input size %d bytes exceeds maximum allowed size %d bytes", len(raw), MaxInputSize)
+	maxSize := GetMaxInputSize()
+	if maxSize > 0 && len(raw) > maxSize {
+		return zero, fmt.Errorf("input size %d bytes exceeds maximum allowed size %d bytes", len(raw), maxSize)
 	}
 
 	// Strategy: Try standard unmarshal first (handles json.RawMessage, custom UnmarshalJSON, etc.)
@@ -406,8 +408,9 @@ func validateStructValue(val reflect.Value, typ reflect.Type) error {
 //
 //nolint:gocyclo // Complexity inherited from original validateStructValue function
 func validateStructValueDepth(val reflect.Value, typ reflect.Type, depth int) error {
-	if MaxValidationDepth > 0 && depth > MaxValidationDepth {
-		return fmt.Errorf("validation depth exceeded maximum of %d levels", MaxValidationDepth)
+	maxDepth := GetMaxValidationDepth()
+	if maxDepth > 0 && depth > maxDepth {
+		return fmt.Errorf("validation depth exceeded maximum of %d levels", maxDepth)
 	}
 
 	validation := getOrCacheValidation(typ)

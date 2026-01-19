@@ -17,7 +17,10 @@ import (
 // Note: The Get/Set functions maintain their own copy of the values. After using
 // SetMaxInputSize(), internal code will use the new value on subsequent calls.
 
-var configMu sync.RWMutex
+var (
+	configMu   sync.RWMutex
+	configOnce sync.Once
+)
 
 // configValues holds thread-safe copies of configuration values.
 // These are initialized from the exported variables on first access.
@@ -25,21 +28,15 @@ var configValues struct {
 	maxInputSize       int
 	maxCacheSize       int
 	maxValidationDepth int
-	initialized        bool
 }
 
 // initConfigOnce ensures configuration is initialized from exported variables
 func initConfigOnce() {
-	if !configValues.initialized {
-		configMu.Lock()
-		defer configMu.Unlock()
-		if !configValues.initialized {
-			configValues.maxInputSize = MaxInputSize
-			configValues.maxCacheSize = MaxCacheSize
-			configValues.maxValidationDepth = MaxValidationDepth
-			configValues.initialized = true
-		}
-	}
+	configOnce.Do(func() {
+		configValues.maxInputSize = MaxInputSize
+		configValues.maxCacheSize = MaxCacheSize
+		configValues.maxValidationDepth = MaxValidationDepth
+	})
 }
 
 // GetMaxInputSize returns the maximum input size in a thread-safe manner.
