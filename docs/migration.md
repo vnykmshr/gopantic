@@ -1,7 +1,5 @@
 # Migration Guide
 
-This guide helps you migrate to gopantic from common Go parsing and validation libraries.
-
 ## Quick Comparison
 
 | Task | Standard Libraries | gopantic |
@@ -103,8 +101,8 @@ Most validator tags work as-is:
 |-----------|----------|-------|
 | `required`, `min=N`, `max=N` | Same | Compatible |
 | `email` | `email` | Simplified regex |
-| `len=8` | `length=8` | Different name |
-| `eqfield=Password` | Custom | Use cross-field validators |
+| `len=8` | `len=8` | Same |
+| `eqfield=Password` | `eqfield=Password` | Cross-field validators supported |
 | `dive` | N/A | Nested validation automatic |
 
 ### 3. Handle type coercion
@@ -215,8 +213,8 @@ model.MaxValidationDepth = 32  // Default, prevents stack overflow
 
 If you encounter migration issues:
 
-1. Check [API documentation](api.md) for function details
-2. Review [examples](../examples/) for common patterns
+1. Check [API documentation](reference/api.md) for function details
+2. Review [examples](https://github.com/vnykmshr/gopantic/tree/main/examples) for common patterns
 3. File issues at https://github.com/vnykmshr/gopantic/issues with:
    - Current code before migration
    - Error or unexpected behavior

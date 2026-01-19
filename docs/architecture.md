@@ -1,7 +1,5 @@
 # Architecture & Design
 
-gopantic is designed for high-performance, type-safe parsing with minimal overhead. This document covers the core architecture, design decisions, and implementation details.
-
 ## Core Architecture
 
 ### Package Structure
@@ -169,7 +167,7 @@ type CachedParser[T any] struct {
 
 type CacheConfig struct {
     TTL             time.Duration // Entry lifetime (default: 1 hour)
-    MaxEntries      int           // LRU eviction limit (default: 1000)
+    MaxEntries      int           // FIFO eviction limit (default: 1000)
     CleanupInterval time.Duration // Background cleanup (default: 30 min)
 }
 ```
@@ -177,7 +175,7 @@ type CacheConfig struct {
 **Features:**
 - **Hit Rate Tracking**: Atomic counters for cache hits/misses
 - **Proactive Cleanup**: Background goroutine removes expired entries
-- **LRU Eviction**: Oldest entries removed when MaxEntries reached
+- **FIFO Eviction**: Oldest entries removed when MaxEntries reached
 - **Thread-Safe**: RWMutex for concurrent access
 
 ### Key Generation
