@@ -1,10 +1,8 @@
 # Validation Guide
 
-gopantic provides comprehensive validation through struct tags. This guide covers all built-in validators and how to create custom ones.
-
 ## Basic Syntax
 
-Validation rules are specified in the `validate` struct tag:
+Use the `validate` struct tag:
 
 ```go
 type User struct {
@@ -145,12 +143,15 @@ type User struct {
 Register custom validation functions:
 
 ```go
-// Register a custom validator
-model.RegisterGlobalFunc("is_even", func(v interface{}, param string) bool {
-    if num, ok := v.(int); ok {
-        return num%2 == 0
+model.RegisterGlobalFunc("is_even", func(fieldName string, value interface{}, params map[string]interface{}) error {
+    num, ok := value.(int)
+    if !ok {
+        return nil // Let type validation handle this
     }
-    return false
+    if num%2 != 0 {
+        return model.NewValidationError(fieldName, value, "is_even", "must be an even number")
+    }
+    return nil
 })
 
 type Numbers struct {
@@ -161,19 +162,22 @@ type Numbers struct {
 ### Custom Cross-Field Validators
 
 ```go
-model.RegisterGlobalCrossFieldFunc("sum_equals", func(v, other interface{}, param string) bool {
-    val, ok1 := v.(int)
-    otherVal, ok2 := other.(int)
-    target, err := strconv.Atoi(param)
-    if !ok1 || !ok2 || err != nil {
-        return false
+model.RegisterGlobalCrossFieldFunc("password_match", func(fieldName string, fieldValue interface{}, structValue reflect.Value, params map[string]interface{}) error {
+    confirmPassword, ok := fieldValue.(string)
+    if !ok {
+        return model.NewValidationError(fieldName, fieldValue, "password_match", "must be a string")
     }
-    return val + otherVal == target
+
+    password := structValue.FieldByName("Password").String()
+    if confirmPassword != password {
+        return model.NewValidationError(fieldName, fieldValue, "password_match", "passwords do not match")
+    }
+    return nil
 })
 
-type Pair struct {
-    A int `json:"a"`
-    B int `json:"b" validate:"sum_equals=100,A"`  // A + B must equal 100
+type Registration struct {
+    Password        string `json:"password" validate:"required,min=8"`
+    ConfirmPassword string `json:"confirm_password" validate:"required,password_match"`
 }
 ```
 
