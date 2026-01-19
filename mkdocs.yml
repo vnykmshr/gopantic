@@ -46,6 +46,7 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - Why gopantic: building-gopantic.md
   - Getting Started: getting-started.md
   - Guide:
     - Validation: guide/validation.md
@@ -54,12 +55,12 @@ nav:
     - API: reference/api.md
     - Types: reference/types.md
   - Migration: migration.md
-  - Changelog: CHANGELOG.md
   - Architecture: architecture.md
+  - Changelog: changelog.md
 
 extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/vnykmshr/gopantic
 
-copyright: Copyright &copy; 2025 - MIT License
+copyright: Copyright &copy; 2025-2026 - MIT License

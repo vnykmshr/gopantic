@@ -246,7 +246,7 @@ Quick links:
 - [Examples](examples/) - Runnable code examples
 
 **Resources**:
-- [Changelog](https://vnykmshr.github.io/gopantic/CHANGELOG/) - Version history
+- [Changelog](https://vnykmshr.github.io/gopantic/changelog/) - Version history
 - [Security Policy](.github/SECURITY.md) - Vulnerability reporting
 
 ## License

@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.3.0] - 2026-01-XX
+## [Unreleased]
 
 ### Security
 
@@ -19,15 +19,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Dark/light mode toggle
   - Full-text search
   - Organized guide and reference sections
+- **"Why gopantic" narrative**: New building-gopantic.md explaining the problem, solution, and design decisions
 - **Expanded cache tests**: Cache module test coverage significantly improved
 
 ### Changed
 
 - **Documentation structure**: Reorganized docs into clear guide/ and reference/ hierarchy
+- **Documentation quality**: All docs reviewed for accuracy and clarity
+- **PostgreSQL tutorial**: Moved to examples/postgresql_jsonb/ as runnable code
 
 ### Fixed
 
-- **architecture.md**: Updated package file list to match actual codebase structure (removed references to non-existent files)
+- **Custom validator docs**: Corrected function signatures in validation.md to match actual API
+- **architecture.md**: Fixed cache terminology (FIFO, not LRU) and package file list
+- **migration.md**: Corrected validator references (`alphanum` not `alphanumeric`)
 
 ### Deprecation Notices
 
