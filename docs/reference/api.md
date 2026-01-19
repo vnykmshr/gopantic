@@ -173,11 +173,15 @@ size := model.GetMaxInputSize()
 ### Custom Validators
 
 ```go
-model.RegisterGlobalFunc("is_even", func(v interface{}, param string) bool {
-    if num, ok := v.(int); ok {
-        return num%2 == 0
+model.RegisterGlobalFunc("is_even", func(fieldName string, value interface{}, params map[string]interface{}) error {
+    num, ok := value.(int)
+    if !ok {
+        return nil
     }
-    return false
+    if num%2 != 0 {
+        return model.NewValidationError(fieldName, value, "is_even", "must be even")
+    }
+    return nil
 })
 ```
 
