@@ -243,11 +243,17 @@ var validationCache sync.Map
 // When the cache size exceeds this limit, the oldest entries are removed (FIFO).
 // Set to 0 for unlimited caching (not recommended for long-running services).
 // Default: 1000 types.
+//
+// WARNING: Direct modification of this variable is NOT thread-safe.
+// For concurrent access, use GetMaxCacheSize() and SetMaxCacheSize().
 var MaxCacheSize = 1000
 
 // MaxValidationDepth is the maximum depth of nested struct validation.
 // This prevents stack overflow and DoS attacks from deeply nested structures.
 // Default: 32 levels.
+//
+// WARNING: Direct modification of this variable is NOT thread-safe.
+// For concurrent access, use GetMaxValidationDepth() and SetMaxValidationDepth().
 var MaxValidationDepth = 32
 
 var (

@@ -30,6 +30,9 @@ type fieldKeyCacheKey struct {
 // MaxInputSize is the default maximum size for input data (10MB).
 // Set to 0 to disable size checking. This prevents resource exhaustion
 // from maliciously large inputs.
+//
+// WARNING: Direct modification of this variable is NOT thread-safe.
+// For concurrent access, use GetMaxInputSize() and SetMaxInputSize().
 var MaxInputSize = 10 * 1024 * 1024 // 10MB
 
 // getOrCacheValidation retrieves cached validation tags or parses and caches them
