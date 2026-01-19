@@ -9,6 +9,9 @@ import (
 	"strings"
 )
 
+// RedactedValue is the placeholder used when sensitive field values are sanitized.
+const RedactedValue = "[REDACTED]"
+
 // ParseError represents an error that occurred during data parsing.
 // Contains detailed information about the field, value, and target type that caused the error.
 type ParseError struct {
@@ -100,6 +103,44 @@ func NewValidationErrorWithDetails(field, fieldPath string, value interface{}, r
 		Message:   message,
 		Details:   details,
 	}
+}
+
+// SanitizedValue returns the error value with sensitive data redacted.
+// If the field name matches any sensitive pattern, returns RedactedValue ("[REDACTED]").
+// Otherwise returns the original value unchanged.
+func (e ValidationError) SanitizedValue() interface{} {
+	if IsSensitiveField(e.Field) || IsSensitiveField(e.FieldPath) {
+		return RedactedValue
+	}
+	return e.Value
+}
+
+// IsSensitiveField checks if a field name matches any sensitive field pattern.
+// Matching is case-insensitive and checks if the pattern is a substring of the field name.
+// Returns true if the field should be considered sensitive and its value redacted.
+//
+// Example:
+//
+//	IsSensitiveField("Password")     // true (matches "password")
+//	IsSensitiveField("user_api_key") // true (matches "api_key")
+//	IsSensitiveField("username")     // false
+func IsSensitiveField(fieldName string) bool {
+	if fieldName == "" {
+		return false
+	}
+
+	patterns := GetSensitiveFieldPatterns()
+	if len(patterns) == 0 {
+		return false
+	}
+
+	lowerField := strings.ToLower(fieldName)
+	for _, pattern := range patterns {
+		if strings.Contains(lowerField, strings.ToLower(pattern)) {
+			return true
+		}
+	}
+	return false
 }
 
 // ErrorList represents a collection of errors that can occur during parsing/validation.
@@ -214,10 +255,10 @@ func (el ErrorList) ToStructuredReport() *StructuredErrorReport {
 				Details: validationErr.Details,
 			})
 
-			// Use the first error's field and value info
+			// Use the first error's field and sanitized value
 			if field == "" {
 				field = validationErr.Field
-				value = validationErr.Value
+				value = validationErr.SanitizedValue()
 			}
 		}
 

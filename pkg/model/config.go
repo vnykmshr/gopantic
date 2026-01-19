@@ -25,10 +25,11 @@ var (
 // configValues holds thread-safe copies of configuration values.
 // These are initialized from the exported variables on first access.
 var configValues struct {
-	maxInputSize       int
-	maxCacheSize       int
-	maxValidationDepth int
-	maxStructureDepth  int
+	maxInputSize           int
+	maxCacheSize           int
+	maxValidationDepth     int
+	maxStructureDepth      int
+	sensitiveFieldPatterns []string
 }
 
 // initConfigOnce ensures configuration is initialized from exported variables
@@ -38,6 +39,7 @@ func initConfigOnce() {
 		configValues.maxCacheSize = MaxCacheSize
 		configValues.maxValidationDepth = MaxValidationDepth
 		configValues.maxStructureDepth = MaxStructureDepth
+		configValues.sensitiveFieldPatterns = append([]string{}, DefaultSensitivePatterns...)
 	})
 }
 
@@ -127,4 +129,54 @@ func SetMaxStructureDepth(depth int) {
 	defer configMu.Unlock()
 	configValues.maxStructureDepth = depth
 	MaxStructureDepth = depth
+}
+
+// DefaultSensitivePatterns contains field name patterns that indicate sensitive data.
+// These patterns are matched case-insensitively as substrings of field names.
+// Fields matching these patterns will have their values redacted in error output.
+var DefaultSensitivePatterns = []string{
+	"password", "passwd", "secret", "token",
+	"key", "credential", "auth", "api_key",
+	"apikey", "private", "bearer",
+}
+
+// GetSensitiveFieldPatterns returns the current sensitive field patterns in a thread-safe manner.
+// Returns a copy of the patterns slice to prevent external modification.
+func GetSensitiveFieldPatterns() []string {
+	initConfigOnce()
+	configMu.RLock()
+	defer configMu.RUnlock()
+	// Return a copy to prevent external modification
+	result := make([]string, len(configValues.sensitiveFieldPatterns))
+	copy(result, configValues.sensitiveFieldPatterns)
+	return result
+}
+
+// SetSensitiveFieldPatterns sets the sensitive field patterns in a thread-safe manner.
+// Pass nil or empty slice to disable sensitive field detection.
+// Pass custom patterns to override the defaults.
+//
+// Example:
+//
+//	model.SetSensitiveFieldPatterns([]string{"password", "secret", "ssn", "credit_card"})
+func SetSensitiveFieldPatterns(patterns []string) {
+	initConfigOnce()
+	configMu.Lock()
+	defer configMu.Unlock()
+	if patterns == nil {
+		configValues.sensitiveFieldPatterns = nil
+	} else {
+		// Store a copy to prevent external modification
+		configValues.sensitiveFieldPatterns = make([]string, len(patterns))
+		copy(configValues.sensitiveFieldPatterns, patterns)
+	}
+}
+
+// AddSensitiveFieldPattern adds a pattern to the sensitive field patterns in a thread-safe manner.
+// The pattern is matched case-insensitively as a substring of field names.
+func AddSensitiveFieldPattern(pattern string) {
+	initConfigOnce()
+	configMu.Lock()
+	defer configMu.Unlock()
+	configValues.sensitiveFieldPatterns = append(configValues.sensitiveFieldPatterns, pattern)
 }
