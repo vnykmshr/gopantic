@@ -1,7 +1,5 @@
 # Type Reference
 
-Complete guide to type support, coercion behavior, and limitations in gopantic.
-
 ## Supported Types
 
 | Type | Support | Coercion | Notes |

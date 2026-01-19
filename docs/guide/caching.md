@@ -1,6 +1,6 @@
 # Caching Guide
 
-gopantic provides an optional caching layer for scenarios where you parse identical data repeatedly. This can provide 5x+ speedup for cached hits.
+Optional caching for repeated parsing of identical data. Provides 5x+ speedup on cache hits.
 
 ## When to Use Caching
 
@@ -130,8 +130,7 @@ wg.Wait()
 | Complex JSON | ~25-30 µs | ~2-3 µs |
 | With validation | +2-5 µs | (same as cached) |
 
-!!! note "Benchmark Caveat"
-    Actual performance depends on struct complexity, validation rules, and input size. Run your own benchmarks for accurate numbers.
+**Note:** Actual performance depends on struct complexity, validation rules, and input size. Run your own benchmarks for accurate numbers.
 
 ## Cache Key Generation
 

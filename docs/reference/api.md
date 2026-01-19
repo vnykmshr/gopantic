@@ -1,7 +1,5 @@
 # API Reference
 
-Complete API documentation for gopantic.
-
 ## Core Functions
 
 ### ParseInto
@@ -116,8 +114,7 @@ var MaxCacheSize = 1000               // Max validation metadata cache (0 = unli
 var MaxValidationDepth = 32           // Max nested struct depth
 ```
 
-!!! warning "Thread Safety"
-    Direct modification of these variables is NOT thread-safe. Use the Get/Set functions for concurrent access.
+**Warning:** Direct modification of these variables is NOT thread-safe. Use the Get/Set functions for concurrent access.
 
 ### Thread-Safe Accessors
 
@@ -239,8 +236,7 @@ Multiple errors are aggregated:
 multiple errors: validation error on field 'ID': field is required; parse error on field 'Age': cannot convert string 'invalid' to integer
 ```
 
-!!! warning "Security Note"
-    Error messages include field values. Sanitize before logging or returning to clients.
+**Security note:** Error messages include field values. Sanitize before logging or returning to clients.
 
 ## Struct Tags
 

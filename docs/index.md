@@ -1,56 +1,33 @@
 # gopantic
 
-**Type-safe JSON/YAML parsing with validation for Go.**
+Type-safe JSON/YAML parsing with validation for Go.
 
-Inspired by Python's Pydantic, gopantic provides automatic format detection, intelligent type coercion, and struct tag-based validation in a single `ParseInto[T]()` call.
+Automatic format detection, type coercion, and struct tag validation in a single `ParseInto[T]()` call.
 
 ## Quick Example
 
 ```go
-package main
-
-import (
-    "fmt"
-    "github.com/vnykmshr/gopantic/pkg/model"
-)
-
 type User struct {
     ID    int    `json:"id" validate:"required,min=1"`
     Name  string `json:"name" validate:"required,min=2"`
     Email string `json:"email" validate:"required,email"`
-    Age   int    `json:"age" validate:"min=0,max=150"`
 }
 
-func main() {
-    data := []byte(`{
-        "id": "123",
-        "name": "Alice",
-        "email": "alice@example.com",
-        "age": "30"
-    }`)
+data := []byte(`{"id": "123", "name": "Alice", "email": "alice@example.com"}`)
 
-    // Parse with automatic format detection, type coercion, and validation
-    user, err := model.ParseInto[User](data)
-    if err != nil {
-        panic(err)
-    }
-
-    fmt.Printf("Parsed: %+v\n", user)
-    // Output: Parsed: {ID:123 Name:Alice Email:alice@example.com Age:30}
-    // Note: String "123" was coerced to int 123
-}
+user, err := model.ParseInto[User](data)
+// String "123" coerced to int 123, validation applied
 ```
 
-## Key Features
+## Features
 
 | Feature | Description |
 |---------|-------------|
-| **Automatic Format Detection** | JSON or YAML, detected automatically |
-| **Type Coercion** | `"123"` becomes `123`, `"true"` becomes `true` |
-| **Validation** | Struct tags: `validate:"required,email,min=5"` |
-| **Cross-Field Validation** | Compare fields: `validate:"gtfield=MinValue"` |
-| **High Performance** | Optional caching for 5x+ speedup on repeated data |
-| **Minimal Dependencies** | Only `gopkg.in/yaml.v3` for YAML support |
+| Format Detection | JSON or YAML detected automatically |
+| Type Coercion | `"123"` to `123`, `"true"` to `true` |
+| Validation | Struct tags: `validate:"required,email,min=5"` |
+| Cross-Field | Compare fields: `validate:"gtfield=Min"` |
+| Caching | Optional, 5x+ speedup on repeated data |
 
 ## Installation
 
@@ -60,28 +37,22 @@ go get github.com/vnykmshr/gopantic
 
 Requires Go 1.23+.
 
-## When to Use gopantic
+## When to Use
 
-**Good fit:**
+Good fit:
 
 - API request parsing with validation
-- Configuration file loading (JSON/YAML)
-- Data import/ETL with type conversion
-- Any scenario where you want parsing + validation in one step
+- Configuration files (JSON/YAML)
+- Data import with type conversion
 
-**Not ideal for:**
+Not ideal:
 
-- High-frequency, latency-critical paths (use standard library)
-- Simple JSON without validation needs
+- Latency-critical hot paths
+- Simple JSON without validation
 - Binary protocols
 
-## Next Steps
+## Next
 
-- [Getting Started](getting-started.md) - Installation and basic usage
-- [Validation Guide](guide/validation.md) - All validation options
-- [API Reference](reference/api.md) - Complete API documentation
-- [Migration Guide](migration.md) - Coming from other libraries
-
-## License
-
-MIT License - see [LICENSE](https://github.com/vnykmshr/gopantic/blob/main/LICENSE)
+- [Getting Started](getting-started.md)
+- [Validation Guide](guide/validation.md)
+- [API Reference](reference/api.md)
