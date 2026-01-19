@@ -112,6 +112,7 @@ Package-level configuration variables:
 var MaxInputSize = 10 * 1024 * 1024  // Max 10MB input (0 = unlimited)
 var MaxCacheSize = 1000               // Max validation metadata cache (0 = unlimited)
 var MaxValidationDepth = 32           // Max nested struct depth
+var MaxStructureDepth = 64            // Max JSON/YAML nesting depth (0 = unlimited)
 ```
 
 **Warning:** Direct modification of these variables is NOT thread-safe. Use the Get/Set functions for concurrent access.
@@ -130,6 +131,10 @@ func SetMaxCacheSize(size int)
 // MaxValidationDepth
 func GetMaxValidationDepth() int
 func SetMaxValidationDepth(depth int)
+
+// MaxStructureDepth
+func GetMaxStructureDepth() int
+func SetMaxStructureDepth(depth int)
 ```
 
 Example:
@@ -139,6 +144,26 @@ Example:
 model.SetMaxInputSize(5 * 1024 * 1024)  // 5MB
 size := model.GetMaxInputSize()
 ```
+
+### Sensitive Field Patterns
+
+Configure which field names are considered sensitive for error value sanitization:
+
+```go
+// Get current patterns
+patterns := model.GetSensitiveFieldPatterns()
+
+// Replace all patterns
+model.SetSensitiveFieldPatterns([]string{"password", "secret", "token"})
+
+// Add a pattern
+model.AddSensitiveFieldPattern("ssn")
+
+// Check if a field is sensitive
+model.IsSensitiveField("user_password")  // true
+```
+
+Default patterns: `password`, `passwd`, `secret`, `token`, `key`, `credential`, `auth`, `api_key`, `apikey`, `private`, `bearer`
 
 ## Validation Tags
 
