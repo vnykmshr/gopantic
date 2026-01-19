@@ -9,10 +9,8 @@ run:
 output:
   show-stats: false
   formats:
-    text:
-      colors: true
-      print-issued-lines: true
-      print-linter-name: true
+    colored-line-number:
+      path: stdout
 
 linters:
   default: none
