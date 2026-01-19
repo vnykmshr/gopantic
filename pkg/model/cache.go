@@ -165,20 +165,24 @@ func (cp *CachedParser[T]) evictOldest() {
 	}
 }
 
-// generateCacheKey creates a unique cache key from content and format
-// Uses FNV-1a for small inputs (<1KB) and SHA256 for larger inputs for optimal performance
+// generateCacheKey creates a unique cache key from content and format.
+// Uses FNV-1a for small inputs (<1KB) for speed, and full SHA256 for larger
+// inputs to prevent hash collisions. The key includes content hash, type
+// prefix, and format to ensure type-safe cache lookups.
 func (cp *CachedParser[T]) generateCacheKey(data []byte, format Format) string {
 	var contentHash string
 
 	// Use faster FNV-1a hash for small inputs (typical case)
+	// Collision probability at 64 bits is acceptable for <1KB inputs
 	if len(data) < 1024 {
 		h := fnv.New64a()
 		_, _ = h.Write(data) // hash.Hash.Write never returns an error
 		contentHash = fmt.Sprintf("%x", h.Sum64())
 	} else {
-		// Use SHA256 for large inputs for better distribution
+		// Use full SHA256 for large inputs to prevent hash collisions
+		// that could lead to cache poisoning with different data
 		hash := sha256.Sum256(data)
-		contentHash = hex.EncodeToString(hash[:8])
+		contentHash = hex.EncodeToString(hash[:])
 	}
 
 	return fmt.Sprintf("%s:%s:%v", contentHash, cp.keyPrefix, format)
