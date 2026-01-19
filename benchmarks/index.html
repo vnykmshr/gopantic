@@ -10,13 +10,9 @@
       
       
       
-        <link rel="canonical" href="https://vnykmshr.github.io/gopantic/getting-started/">
+        <link rel="canonical" href="https://vnykmshr.github.io/gopantic/benchmarks/">
       
       
-        <link rel="prev" href="../building-gopantic/">
-      
-      
-        <link rel="next" href="../guide/validation/">
       
       
         
@@ -27,7 +23,7 @@
     
     
       
-        <title>Getting Started - gopantic</title>
+        <title>Benchmark Comparison - gopantic</title>
       
     
     
@@ -78,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#getting-started" class="md-skip">
+        <a href="#benchmark-comparison" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Getting Started
+              Benchmark Comparison
             
           </span>
         </div>
@@ -313,37 +309,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Getting Started
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
         
   
   
@@ -359,114 +328,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#installation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Installation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#basic-usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Basic Usage
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#yaml" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        YAML
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#validation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Validation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#error-handling" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Error Handling
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#caching" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Caching
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuration
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Next
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -809,10 +670,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#installation" class="md-nav__link">
+  <a href="#methodology" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Installation
+        Methodology
       
     </span>
   </a>
@@ -820,10 +681,115 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#basic-usage" class="md-nav__link">
+  <a href="#results-summary" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Basic Usage
+        Results Summary
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Results Summary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#validation-only-struct-already-parsed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validation-Only (struct already parsed)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parse-validate-json-to-validated-struct" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parse + Validate (JSON to validated struct)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parsing-only-no-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parsing Only (no validation)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cached-parsing-gopantic-unique-feature" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cached Parsing (gopantic unique feature)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type-coercion-gopantic-unique-feature" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Type Coercion (gopantic unique feature)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#json-vs-yaml-parsing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JSON vs YAML Parsing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#format-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Format Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parallel-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parallel Performance
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when-to-use-gopantic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When to Use gopantic
       
     </span>
   </a>
@@ -831,10 +797,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#yaml" class="md-nav__link">
+  <a href="#detailed-results" class="md-nav__link">
     <span class="md-ellipsis">
       
-        YAML
+        Detailed Results
       
     </span>
   </a>
@@ -842,10 +808,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#validation" class="md-nav__link">
+  <a href="#reproducing-benchmarks" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Validation
+        Reproducing Benchmarks
       
     </span>
   </a>
@@ -853,43 +819,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#error-handling" class="md-nav__link">
+  <a href="#notes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Error Handling
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#caching" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Caching
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuration
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Next
+        Notes
       
     </span>
   </a>
@@ -916,123 +849,246 @@
   
 
 
-<h1 id="getting-started">Getting Started</h1>
-<h2 id="installation">Installation</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>go<span class="w"> </span>get<span class="w"> </span>github.com/vnykmshr/gopantic
-</code></pre></div>
-<h2 id="basic-usage">Basic Usage</h2>
-<p>Define a struct with JSON tags and validation rules:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kd">type</span><span class="w"> </span><span class="nx">User</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="nx">ID</span><span class="w">       </span><span class="kt">int</span><span class="w">    </span><span class="s">`json:&quot;id&quot; validate:&quot;required,min=1&quot;`</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nx">Username</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;username&quot; validate:&quot;required,min=3,max=50&quot;`</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="nx">Email</span><span class="w">    </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;email&quot; validate:&quot;required,email&quot;`</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="nx">Age</span><span class="w">      </span><span class="kt">int</span><span class="w">    </span><span class="s">`json:&quot;age&quot; validate:&quot;min=0,max=150&quot;`</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="p">}</span>
-</code></pre></div>
-<p>Parse data:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">import</span><span class="w"> </span><span class="s">&quot;github.com/vnykmshr/gopantic/pkg/model&quot;</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nx">data</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="p">[]</span><span class="nb">byte</span><span class="p">(</span><span class="s">`{&quot;id&quot;: &quot;123&quot;, &quot;username&quot;: &quot;alice&quot;, &quot;email&quot;: &quot;alice@example.com&quot;, &quot;age&quot;: &quot;25&quot;}`</span><span class="p">)</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="nx">user</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">model</span><span class="p">.</span><span class="nx">ParseInto</span><span class="p">[</span><span class="nx">User</span><span class="p">](</span><span class="nx">data</span><span class="p">)</span>
-</code></pre></div>
-<p>String <code>"123"</code> is coerced to int <code>123</code>.</p>
-<h2 id="yaml">YAML</h2>
-<p>Format detected automatically:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nx">yamlData</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="p">[]</span><span class="nb">byte</span><span class="p">(</span><span class="s">`</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="s">id: 456</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="s">username: bob</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="s">email: bob@example.com</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="s">age: 30</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="s">`</span><span class="p">)</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="nx">user</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">model</span><span class="p">.</span><span class="nx">ParseInto</span><span class="p">[</span><span class="nx">User</span><span class="p">](</span><span class="nx">yamlData</span><span class="p">)</span>
-</code></pre></div>
-<p>Explicit format when known:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nx">user</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">model</span><span class="p">.</span><span class="nx">ParseIntoWithFormat</span><span class="p">[</span><span class="nx">User</span><span class="p">](</span><span class="nx">data</span><span class="p">,</span><span class="w"> </span><span class="nx">model</span><span class="p">.</span><span class="nx">FormatJSON</span><span class="p">)</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nx">user</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">model</span><span class="p">.</span><span class="nx">ParseIntoWithFormat</span><span class="p">[</span><span class="nx">User</span><span class="p">](</span><span class="nx">yamlData</span><span class="p">,</span><span class="w"> </span><span class="nx">model</span><span class="p">.</span><span class="nx">FormatYAML</span><span class="p">)</span>
-</code></pre></div>
-<h2 id="validation">Validation</h2>
-<p>Built-in validators:</p>
+<h1 id="benchmark-comparison">Benchmark Comparison</h1>
+<p>Performance comparison between gopantic and alternatives.</p>
+<h2 id="methodology">Methodology</h2>
+<p><strong>Hardware:</strong> Intel Core i5-8257U CPU @ 1.40GHz (8 cores)
+<strong>Go Version:</strong> 1.24.0
+<strong>OS:</strong> macOS (Darwin)
+<strong>Date:</strong> 2026-01-19</p>
+<p>All benchmarks run with:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-bench<span class="o">=</span>.<span class="w"> </span>-benchmem<span class="w"> </span>./tests/...<span class="w"> </span>-run<span class="o">=</span>^$
+</code></pre></div></p>
+<h2 id="results-summary">Results Summary</h2>
+<h3 id="validation-only-struct-already-parsed">Validation-Only (struct already parsed)</h3>
 <table>
 <thead>
 <tr>
-<th>Validator</th>
-<th>Example</th>
-<th>Description</th>
+<th>Library</th>
+<th>Simple Struct</th>
+<th>Complex Struct</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>required</code></td>
-<td><code>validate:"required"</code></td>
-<td>Non-zero value</td>
+<td><strong>gopantic</strong></td>
+<td>1311 ns/op, 81 B/op, 5 allocs</td>
+<td>2450 ns/op, 203 B/op, 11 allocs</td>
 </tr>
 <tr>
-<td><code>min</code></td>
-<td><code>validate:"min=5"</code></td>
-<td>Min value or length</td>
-</tr>
-<tr>
-<td><code>max</code></td>
-<td><code>validate:"max=100"</code></td>
-<td>Max value or length</td>
-</tr>
-<tr>
-<td><code>length</code></td>
-<td><code>validate:"length=10"</code></td>
-<td>Exact length</td>
-</tr>
-<tr>
-<td><code>email</code></td>
-<td><code>validate:"email"</code></td>
-<td>Email format</td>
-</tr>
-<tr>
-<td><code>alpha</code></td>
-<td><code>validate:"alpha"</code></td>
-<td>Letters only</td>
-</tr>
-<tr>
-<td><code>alphanum</code></td>
-<td><code>validate:"alphanum"</code></td>
-<td>Letters and numbers</td>
+<td><strong>go-playground/validator</strong></td>
+<td>1552 ns/op, 88 B/op, 5 allocs</td>
+<td>1740 ns/op, 89 B/op, 5 allocs</td>
 </tr>
 </tbody>
 </table>
-<p>Combine with commas:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nx">Email</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;email&quot; validate:&quot;required,email&quot;`</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nx">Age</span><span class="w">   </span><span class="kt">int</span><span class="w">    </span><span class="s">`json:&quot;age&quot; validate:&quot;required,min=18,max=120&quot;`</span>
+<p><strong>Takeaway:</strong> gopantic is ~15% faster for simple validation but go-playground/validator is faster for complex nested structs due to optimized struct traversal.</p>
+<h3 id="parse-validate-json-to-validated-struct">Parse + Validate (JSON to validated struct)</h3>
+<table>
+<thead>
+<tr>
+<th>Approach</th>
+<th>Simple Struct</th>
+<th>Complex Struct</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>gopantic ParseInto</strong></td>
+<td>4264 ns/op, 988 B/op, 28 allocs</td>
+<td>12720 ns/op, 2642 B/op, 85 allocs</td>
+</tr>
+<tr>
+<td><strong>encoding/json + validator</strong></td>
+<td>2928 ns/op, 382 B/op, 12 allocs</td>
+<td>7796 ns/op, 772 B/op, 26 allocs</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Takeaway:</strong> Standard library combination is faster for pure JSON-to-struct. gopantic's strength is in type coercion and multi-format support.</p>
+<h3 id="parsing-only-no-validation">Parsing Only (no validation)</h3>
+<table>
+<thead>
+<tr>
+<th>Library</th>
+<th>Simple Struct</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>gopantic</strong></td>
+<td>2853 ns/op, 896 B/op, 23 allocs</td>
+</tr>
+<tr>
+<td><strong>encoding/json</strong></td>
+<td>1340 ns/op, 288 B/op, 7 allocs</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Takeaway:</strong> encoding/json is ~2x faster for pure JSON parsing. gopantic adds overhead for format detection and coercion infrastructure.</p>
+<h3 id="cached-parsing-gopantic-unique-feature">Cached Parsing (gopantic unique feature)</h3>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>Performance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Cached</strong></td>
+<td>645.6 ns/op, 112 B/op, 6 allocs</td>
+</tr>
+<tr>
+<td><strong>Uncached</strong></td>
+<td>6068 ns/op, 1118 B/op, 35 allocs</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Takeaway:</strong> CachedParser provides ~10x performance improvement for repeated parsing of the same data.</p>
+<h3 id="type-coercion-gopantic-unique-feature">Type Coercion (gopantic unique feature)</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1">// Input: {&quot;id&quot;: &quot;123&quot;, &quot;name&quot;: &quot;John&quot;, &quot;age&quot;: &quot;30&quot;}</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="c1">// Output: struct with int id=123, int age=30</span>
 </code></pre></div>
-<p>See <a href="../guide/validation/">Validation Guide</a> for all validators.</p>
-<h2 id="error-handling">Error Handling</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nx">user</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">model</span><span class="p">.</span><span class="nx">ParseInto</span><span class="p">[</span><span class="nx">User</span><span class="p">](</span><span class="nx">data</span><span class="p">)</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="c1">// &quot;field &#39;email&#39; validation failed: invalid email format&quot;</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span><span class="nx">log</span><span class="p">.</span><span class="nx">Printf</span><span class="p">(</span><span class="s">&quot;Error: %v&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="p">}</span>
+<table>
+<thead>
+<tr>
+<th>Library</th>
+<th>Performance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>gopantic</strong></td>
+<td>6491 ns/op, 1882 B/op, 50 allocs</td>
+</tr>
+<tr>
+<td><strong>encoding/json</strong></td>
+<td>❌ Fails (type mismatch error)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Takeaway:</strong> gopantic automatically coerces string numbers to integers. Standard library requires exact type matching.</p>
+<h3 id="json-vs-yaml-parsing">JSON vs YAML Parsing</h3>
+<table>
+<thead>
+<tr>
+<th>Format</th>
+<th>Performance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>JSON</strong></td>
+<td>4263 ns/op, 989 B/op, 28 allocs</td>
+</tr>
+<tr>
+<td><strong>YAML</strong></td>
+<td>24194 ns/op, 17885 B/op, 161 allocs</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Takeaway:</strong> JSON is ~6x faster than YAML. Use JSON when performance matters.</p>
+<h3 id="format-detection">Format Detection</h3>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Performance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>DetectFormat</strong></td>
+<td>2.588 ns/op, 0 B/op, 0 allocs</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Takeaway:</strong> Format detection is essentially free (sub-3ns).</p>
+<h3 id="parallel-performance">Parallel Performance</h3>
+<table>
+<thead>
+<tr>
+<th>Approach</th>
+<th>Performance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>gopantic</strong></td>
+<td>1986 ns/op, 1002 B/op, 28 allocs</td>
+</tr>
+<tr>
+<td><strong>encoding/json + validator</strong></td>
+<td>1634 ns/op, 391 B/op, 12 allocs</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Takeaway:</strong> Both scale well under concurrent load. Standard library combination has lower overhead.</p>
+<h2 id="when-to-use-gopantic">When to Use gopantic</h2>
+<p><strong>Choose gopantic when:</strong>
+- You need automatic type coercion (string "123" → int 123)
+- You work with both JSON and YAML formats
+- You want integrated parse + validate in one step
+- You use the CachedParser for repeated parsing
+- You're building configuration parsers, API gateways, or data pipelines</p>
+<p><strong>Choose encoding/json + validator when:</strong>
+- Pure performance is critical
+- You only use JSON format
+- Your data always has exact type matching
+- You're processing high-volume, well-typed streams</p>
+<h2 id="detailed-results">Detailed Results</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>BenchmarkValidation_Gopantic_Simple-8                 921296          1311 ns/op          81 B/op          5 allocs/op
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>BenchmarkValidation_Playground_Simple-8               799057          1552 ns/op          88 B/op          5 allocs/op
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>BenchmarkValidation_Gopantic_Complex-8                457716          2450 ns/op         203 B/op         11 allocs/op
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>BenchmarkValidation_Playground_Complex-8              686307          1740 ns/op          89 B/op          5 allocs/op
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>BenchmarkParseValidate_Gopantic_Simple-8              279391          4264 ns/op         988 B/op         28 allocs/op
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>BenchmarkParseValidate_StdJSON_Simple-8               404677          2928 ns/op         382 B/op         12 allocs/op
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>BenchmarkParseValidate_Gopantic_Complex-8              95326         12720 ns/op        2642 B/op         85 allocs/op
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>BenchmarkParseValidate_StdJSON_Complex-8              178778          7796 ns/op         772 B/op         26 allocs/op
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>BenchmarkParse_Gopantic_NoValidation-8                414764          2853 ns/op         896 B/op         23 allocs/op
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>BenchmarkParse_StdJSON-8                              891786          1340 ns/op         288 B/op          7 allocs/op
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>BenchmarkCachedParsing-8                             1799991           645.6 ns/op       112 B/op          6 allocs/op
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>BenchmarkCoercion_Gopantic-8                          181592          6491 ns/op        1882 B/op         50 allocs/op
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>BenchmarkFormat_JSON-8                                274134          4263 ns/op         989 B/op         28 allocs/op
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>BenchmarkFormat_YAML-8                                 49485         24194 ns/op       17885 B/op        161 allocs/op
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>BenchmarkFormatDetect-8                             464196988            2.588 ns/op           0 B/op          0 allocs/op
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>BenchmarkParallel_Gopantic_Simple-8                   653206          1986 ns/op        1002 B/op         28 allocs/op
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>BenchmarkParallel_StdJSON_Simple-8                    948778          1634 ns/op         391 B/op         12 allocs/op
 </code></pre></div>
-<p>Error messages include field values. Do not expose to untrusted clients.</p>
-<h2 id="caching">Caching</h2>
-<p>For repeated parsing of identical data:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nx">parser</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">model</span><span class="p">.</span><span class="nx">NewCachedParser</span><span class="p">[</span><span class="nx">User</span><span class="p">](</span><span class="kc">nil</span><span class="p">)</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="k">defer</span><span class="w"> </span><span class="nx">parser</span><span class="p">.</span><span class="nx">Close</span><span class="p">()</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="nx">user1</span><span class="p">,</span><span class="w"> </span><span class="nx">_</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">parser</span><span class="p">.</span><span class="nx">Parse</span><span class="p">(</span><span class="nx">data</span><span class="p">)</span><span class="w">  </span><span class="c1">// Cache miss</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="nx">user2</span><span class="p">,</span><span class="w"> </span><span class="nx">_</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">parser</span><span class="p">.</span><span class="nx">Parse</span><span class="p">(</span><span class="nx">data</span><span class="p">)</span><span class="w">  </span><span class="c1">// Cache hit</span>
+<h2 id="reproducing-benchmarks">Reproducing Benchmarks</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Clone the repository</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/vnykmshr/gopantic.git
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="nb">cd</span><span class="w"> </span>gopantic
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="c1"># Run all benchmarks</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-bench<span class="o">=</span>.<span class="w"> </span>-benchmem<span class="w"> </span>./tests/...<span class="w"> </span>-run<span class="o">=</span>^$
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="c1"># Run specific benchmark categories</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-bench<span class="o">=</span>Validation<span class="w"> </span>-benchmem<span class="w"> </span>./tests/...
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-bench<span class="o">=</span>ParseValidate<span class="w"> </span>-benchmem<span class="w"> </span>./tests/...
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-bench<span class="o">=</span>Parallel<span class="w"> </span>-benchmem<span class="w"> </span>./tests/...
 </code></pre></div>
-<p>See <a href="../guide/caching/">Caching Guide</a>.</p>
-<h2 id="configuration">Configuration</h2>
-<p>Thread-safe accessors:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nx">model</span><span class="p">.</span><span class="nx">SetMaxInputSize</span><span class="p">(</span><span class="mi">5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1024</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1024</span><span class="p">)</span><span class="w">  </span><span class="c1">// 5MB (default: 10MB)</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nx">model</span><span class="p">.</span><span class="nx">SetMaxValidationDepth</span><span class="p">(</span><span class="mi">16</span><span class="p">)</span><span class="w">          </span><span class="c1">// default: 32</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="nx">model</span><span class="p">.</span><span class="nx">SetMaxCacheSize</span><span class="p">(</span><span class="mi">500</span><span class="p">)</span><span class="w">               </span><span class="c1">// default: 1000</span>
-</code></pre></div>
-<h2 id="next">Next</h2>
-<ul>
-<li><a href="../guide/validation/">Validation Guide</a></li>
-<li><a href="../guide/caching/">Caching Guide</a></li>
-<li><a href="../reference/api/">API Reference</a></li>
-</ul>
+<h2 id="notes">Notes</h2>
+<ol>
+<li>
+<p><strong>Benchmark stability:</strong> Results may vary by ±10% between runs due to CPU frequency scaling and system load.</p>
+</li>
+<li>
+<p><strong>Validation scope:</strong> go-playground/validator supports more validation rules out of the box. gopantic focuses on core validators with extensibility.</p>
+</li>
+<li>
+<p><strong>Memory vs CPU:</strong> gopantic trades some memory for features like type coercion and format flexibility.</p>
+</li>
+<li>
+<p><strong>Real-world usage:</strong> Microbenchmarks don't capture all production scenarios. Profile your specific workload.</p>
+</li>
+</ol>
 
 
 

@@ -773,17 +773,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#cross-field-validators" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cross-Field Validators
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#custom-validators" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1263,17 +1252,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#cross-field-validators" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cross-Field Validators
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#custom-validators" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1552,10 +1530,10 @@
 <td><code>validate:"max=50"</code></td>
 </tr>
 <tr>
-<td><code>len=N</code></td>
-<td>String, Slice</td>
+<td><code>length=N</code></td>
+<td>String</td>
 <td>Exact length</td>
-<td><code>validate:"len=8"</code></td>
+<td><code>validate:"length=8"</code></td>
 </tr>
 <tr>
 <td><code>email</code></td>
@@ -1564,21 +1542,9 @@
 <td><code>validate:"email"</code></td>
 </tr>
 <tr>
-<td><code>url</code></td>
-<td>String</td>
-<td>Valid URL</td>
-<td><code>validate:"url"</code></td>
-</tr>
-<tr>
-<td><code>uuid</code></td>
-<td>String</td>
-<td>Valid UUID</td>
-<td><code>validate:"uuid"</code></td>
-</tr>
-<tr>
 <td><code>alpha</code></td>
 <td>String</td>
-<td>Alphabetic only</td>
+<td>Alphabetic only (a-zA-Z)</td>
 <td><code>validate:"alpha"</code></td>
 </tr>
 <tr>
@@ -1587,57 +1553,10 @@
 <td>Alphanumeric only</td>
 <td><code>validate:"alphanum"</code></td>
 </tr>
-<tr>
-<td><code>oneof</code></td>
-<td>String</td>
-<td>One of listed values</td>
-<td><code>validate:"oneof=a b c"</code></td>
-</tr>
-</tbody>
-</table>
-<h3 id="cross-field-validators">Cross-Field Validators</h3>
-<table>
-<thead>
-<tr>
-<th>Tag</th>
-<th>Description</th>
-<th>Example</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>eqfield=F</code></td>
-<td>Equal to field F</td>
-<td><code>validate:"eqfield=Password"</code></td>
-</tr>
-<tr>
-<td><code>nefield=F</code></td>
-<td>Not equal to field F</td>
-<td><code>validate:"nefield=OldPassword"</code></td>
-</tr>
-<tr>
-<td><code>gtfield=F</code></td>
-<td>Greater than field F</td>
-<td><code>validate:"gtfield=Min"</code></td>
-</tr>
-<tr>
-<td><code>gtefield=F</code></td>
-<td>Greater than or equal</td>
-<td><code>validate:"gtefield=Start"</code></td>
-</tr>
-<tr>
-<td><code>ltfield=F</code></td>
-<td>Less than field F</td>
-<td><code>validate:"ltfield=Max"</code></td>
-</tr>
-<tr>
-<td><code>ltefield=F</code></td>
-<td>Less than or equal</td>
-<td><code>validate:"ltefield=End"</code></td>
-</tr>
 </tbody>
 </table>
 <h3 id="custom-validators">Custom Validators</h3>
+<p>Cross-field validators (like <code>eqfield</code>, <code>nefield</code>) are not built-in but can be easily added:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="nx">model</span><span class="p">.</span><span class="nx">RegisterGlobalFunc</span><span class="p">(</span><span class="s">&quot;is_even&quot;</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">fieldName</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">value</span><span class="w"> </span><span class="kd">interface</span><span class="p">{},</span><span class="w"> </span><span class="nx">params</span><span class="w"> </span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kd">interface</span><span class="p">{})</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">    </span><span class="nx">num</span><span class="p">,</span><span class="w"> </span><span class="nx">ok</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">value</span><span class="p">.(</span><span class="kt">int</span><span class="p">)</span>
 <a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">!</span><span class="nx">ok</span><span class="w"> </span><span class="p">{</span>
