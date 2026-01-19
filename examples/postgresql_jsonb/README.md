@@ -14,7 +14,7 @@ The example shows:
 ## Running the Example
 
 ```bash
-cd examples/database_metadata
+cd examples/postgresql_jsonb
 go run main.go
 ```
 
@@ -137,6 +137,5 @@ type TenantConfig struct {
 
 ## See Also
 
-- [Database Integration Guide](../../docs/database-integration.md)
-- [Advanced Types Guide](../../docs/advanced-types.md)
-- [API Reference](../../docs/api.md)
+- [Type Reference](https://vnykmshr.github.io/gopantic/reference/types/) - Supported types including json.RawMessage
+- [API Reference](https://vnykmshr.github.io/gopantic/reference/api/) - Complete API documentation

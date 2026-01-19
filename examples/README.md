@@ -1,84 +1,39 @@
 # gopantic Examples
 
-Practical examples demonstrating gopantic's features for data parsing and validation.
+Runnable examples demonstrating gopantic features.
 
-## Quick Start
+## Examples
 
-New to gopantic? Follow this learning path:
+### quickstart/
+Basic parsing and validation. Start here.
 
-### 1. quickstart/
-**Basic parsing and validation**
+### api_validation/
+HTTP request validation patterns for production use.
 
-Learn the fundamentals:
-- Parse JSON with automatic type coercion
-- Add validation rules using struct tags
-- Handle validation errors
+### cross_field_validation/
+Password confirmation, field comparisons, custom validators.
 
-Start here if you're new to gopantic.
+### cache_demo/
+CachedParser for repeated parsing of identical inputs.
 
-### 2. yaml/
-**YAML configuration parsing**
+### yaml/
+Configuration file parsing with automatic format detection.
 
-Working with configuration files:
-- Parse YAML and JSON with the same API
-- Automatic format detection
-- Nested configuration structures
-- Type coercion across formats
+### pointers/
+Optional fields using pointers to distinguish missing from zero.
 
-### 3. cache_demo/
-**High-performance caching**
+### postgresql_jsonb/
+PostgreSQL JSONB integration with `json.RawMessage` for flexible metadata.
 
-Optimize repeated parsing:
-- Use CachedParser for identical inputs
-- Monitor cache hit rates
-- When caching helps (and when it doesn't)
-
-### 4. cross_field_validation/
-**Advanced validation patterns**
-
-Custom validation logic:
-- Cross-field validators
-- Custom validation functions
-- Complex business rules
-- Password confirmation patterns
-
-### 5. pointers/
-**Optional fields with pointers**
-
-Handle missing data:
-- Distinguish between zero values and missing fields
-- Optional vs required fields
-- Nil pointer handling
-
-### 6. api_validation/
-**Real-world API validation**
-
-Production patterns:
-- HTTP request validation
-- Error response formatting
-- Integration with web frameworks
-- Production-ready error handling
-
-## Database Integration
-
-For PostgreSQL JSONB integration, see:
-- [docs/tutorials/postgresql-integration/](../docs/tutorials/postgresql-integration/)
-
-Complete example with database integration, flexible metadata, and ORM patterns.
-
-## Running Examples
+## Running
 
 ```bash
-# Run any example
-cd quickstart
+cd examples/quickstart
 go run main.go
-
-# Or from project root
-go run examples/quickstart/main.go
 ```
 
-## See Also
+## Documentation
 
-- [API Documentation](../docs/api.md) - Complete API reference
-- [Type Reference](../docs/type-reference.md) - Supported types and limitations
-- [Database Integration](../docs/database-integration.md) - PostgreSQL patterns
+- [Getting Started](https://vnykmshr.github.io/gopantic/getting-started/)
+- [API Reference](https://vnykmshr.github.io/gopantic/reference/api/)
+- [Type Reference](https://vnykmshr.github.io/gopantic/reference/types/)
