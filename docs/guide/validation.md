@@ -15,6 +15,8 @@ Multiple validators are comma-separated. Validators are applied in order.
 
 ## Built-in Validators
 
+gopantic includes these built-in validators:
+
 ### Presence
 
 | Validator | Description | Example |
@@ -26,27 +28,20 @@ Name string `json:"name" validate:"required"`
 // "" fails, "Alice" passes
 ```
 
-### Comparison
+### Range
 
 | Validator | Description | Example |
 |-----------|-------------|---------|
 | `min` | Minimum value/length | `validate:"min=5"` |
 | `max` | Maximum value/length | `validate:"max=100"` |
-| `len` | Exact length | `validate:"len=10"` |
-| `eq` | Equals value | `validate:"eq=active"` |
-| `ne` | Not equals value | `validate:"ne=deleted"` |
-| `gt` | Greater than | `validate:"gt=0"` |
-| `gte` | Greater than or equal | `validate:"gte=1"` |
-| `lt` | Less than | `validate:"lt=100"` |
-| `lte` | Less than or equal | `validate:"lte=99"` |
+| `length` | Exact length (strings only) | `validate:"length=10"` |
 
-For strings, `min`/`max`/`len` check length. For numbers, they check value.
+For strings, `min`/`max` check length. For numbers, they check value.
 
 ```go
 Age     int    `json:"age" validate:"min=0,max=150"`      // 0 <= age <= 150
 Name    string `json:"name" validate:"min=2,max=50"`      // 2 <= len(name) <= 50
-Status  string `json:"status" validate:"eq=active"`       // must be "active"
-Balance int    `json:"balance" validate:"gte=0"`          // must be >= 0
+Code    string `json:"code" validate:"length=6"`          // len(code) == 6
 ```
 
 ### String Formats
@@ -54,71 +49,13 @@ Balance int    `json:"balance" validate:"gte=0"`          // must be >= 0
 | Validator | Description | Example |
 |-----------|-------------|---------|
 | `email` | Valid email format | `validate:"email"` |
-| `url` | Valid URL | `validate:"url"` |
-| `uuid` | Valid UUID | `validate:"uuid"` |
-| `alpha` | Letters only | `validate:"alpha"` |
+| `alpha` | Letters only (a-zA-Z) | `validate:"alpha"` |
 | `alphanum` | Letters and numbers only | `validate:"alphanum"` |
-| `numeric` | Numeric string | `validate:"numeric"` |
 
 ```go
 Email   string `json:"email" validate:"required,email"`
-Website string `json:"website" validate:"url"`
-ID      string `json:"id" validate:"uuid"`
-Code    string `json:"code" validate:"alphanum,len=6"`
-```
-
-### Choice
-
-| Validator | Description | Example |
-|-----------|-------------|---------|
-| `oneof` | Must be one of listed values | `validate:"oneof=draft published archived"` |
-
-```go
-Status string `json:"status" validate:"required,oneof=draft published archived"`
-// Only "draft", "published", or "archived" are valid
-```
-
-### Slice/Array
-
-| Validator | Description | Example |
-|-----------|-------------|---------|
-| `min` | Minimum length | `validate:"min=1"` |
-| `max` | Maximum length | `validate:"max=10"` |
-| `dive` | Validate each element | `validate:"dive,required"` |
-
-```go
-Tags []string `json:"tags" validate:"min=1,max=5"`           // 1-5 tags
-IDs  []int    `json:"ids" validate:"required,dive,min=1"`    // each ID >= 1
-```
-
-## Cross-Field Validation
-
-Compare one field against another:
-
-| Validator | Description | Example |
-|-----------|-------------|---------|
-| `eqfield` | Equal to other field | `validate:"eqfield=ConfirmPassword"` |
-| `nefield` | Not equal to other field | `validate:"nefield=OldPassword"` |
-| `gtfield` | Greater than other field | `validate:"gtfield=MinValue"` |
-| `gtefield` | Greater than or equal to other field | `validate:"gtefield=StartDate"` |
-| `ltfield` | Less than other field | `validate:"ltfield=MaxValue"` |
-| `ltefield` | Less than or equal to other field | `validate:"ltefield=EndDate"` |
-
-```go
-type Registration struct {
-    Password        string `json:"password" validate:"required,min=8"`
-    ConfirmPassword string `json:"confirm_password" validate:"required,eqfield=Password"`
-}
-
-type DateRange struct {
-    StartDate time.Time `json:"start_date" validate:"required"`
-    EndDate   time.Time `json:"end_date" validate:"required,gtfield=StartDate"`
-}
-
-type PriceRange struct {
-    MinPrice float64 `json:"min_price" validate:"min=0"`
-    MaxPrice float64 `json:"max_price" validate:"gtefield=MinPrice"`
-}
+Country string `json:"country" validate:"alpha"`
+Code    string `json:"code" validate:"alphanum"`
 ```
 
 ## Nested Struct Validation
@@ -129,7 +66,7 @@ Nested structs are validated automatically:
 type Address struct {
     Street  string `json:"street" validate:"required"`
     City    string `json:"city" validate:"required"`
-    ZipCode string `json:"zip_code" validate:"required,len=5"`
+    ZipCode string `json:"zip_code" validate:"required,alphanum"`
 }
 
 type User struct {
@@ -138,9 +75,17 @@ type User struct {
 }
 ```
 
+## Slice Validation
+
+Slices can be validated for length:
+
+```go
+Tags []string `json:"tags" validate:"min=1,max=5"`  // 1-5 items
+```
+
 ## Custom Validators
 
-Register custom validation functions:
+Register custom validation functions for domain-specific rules:
 
 ```go
 model.RegisterGlobalFunc("is_even", func(fieldName string, value interface{}, params map[string]interface{}) error {
@@ -160,6 +105,8 @@ type Numbers struct {
 ```
 
 ### Custom Cross-Field Validators
+
+For validations that compare fields against each other:
 
 ```go
 model.RegisterGlobalCrossFieldFunc("password_match", func(fieldName string, fieldValue interface{}, structValue reflect.Value, params map[string]interface{}) error {
@@ -188,8 +135,8 @@ Errors include field names and failure reasons:
 ```go
 user, err := model.ParseInto[User](data)
 if err != nil {
-    // "field 'email' validation failed: invalid email format"
-    // "field 'age' validation failed: min validation failed, got 5, expected >= 18"
+    // "validation error on field 'email': invalid email format"
+    // "validation error on field 'age': value 5 is less than minimum 18"
 }
 ```
 
@@ -208,6 +155,20 @@ if errors.As(err, &validErr) {
 }
 ```
 
+### Sensitive Field Protection
+
+Sensitive field values are automatically redacted in error output:
+
+```go
+type Login struct {
+    Username string `json:"username" validate:"required"`
+    Password string `json:"password" validate:"required,min=8"`
+}
+
+// If password validation fails, the error won't contain the actual password
+// The value will show as "[REDACTED]" in error reports
+```
+
 ## Tips
 
 1. **Order matters**: `validate:"required,email"` checks required first
@@ -217,28 +178,73 @@ if errors.As(err, &validErr) {
 
 ## Common Patterns
 
-### Optional Email
+### Password with Confirmation
 
 ```go
-Email string `json:"email" validate:"omitempty,email"`
-// Empty is OK, but if provided must be valid email
+// Register a custom cross-field validator
+model.RegisterGlobalCrossFieldFunc("eqfield", func(fieldName string, fieldValue interface{}, structValue reflect.Value, params map[string]interface{}) error {
+    otherField := params["value"].(string)
+    otherValue := structValue.FieldByName(otherField)
+    if !otherValue.IsValid() {
+        return model.NewValidationError(fieldName, fieldValue, "eqfield", "comparison field not found")
+    }
+    if fieldValue != otherValue.Interface() {
+        return model.NewValidationError(fieldName, fieldValue, "eqfield", "fields do not match")
+    }
+    return nil
+})
+
+type Registration struct {
+    Password        string `json:"password" validate:"required,min=8"`
+    ConfirmPassword string `json:"confirm_password" validate:"required,eqfield=Password"`
+}
 ```
 
-### Password Complexity
+### Optional with Format
 
 ```go
-Password string `json:"password" validate:"required,min=8,max=72"`
+// Use custom validator for optional + format
+model.RegisterGlobalFunc("optional_email", func(fieldName string, value interface{}, params map[string]interface{}) error {
+    str, ok := value.(string)
+    if !ok || str == "" {
+        return nil // Empty is OK
+    }
+    // Validate email format if non-empty
+    if !strings.Contains(str, "@") {
+        return model.NewValidationError(fieldName, value, "optional_email", "invalid email format")
+    }
+    return nil
+})
+
+Email string `json:"email" validate:"optional_email"`
 ```
 
 ### Phone Number
 
 ```go
-Phone string `json:"phone" validate:"required,numeric,len=10"`
+Phone string `json:"phone" validate:"required,alphanum,min=10,max=15"`
 ```
 
-### Date Range
+## Extending Validators
+
+For validators not included by default (like `url`, `uuid`, `oneof`), register custom implementations:
 
 ```go
-StartDate time.Time `json:"start_date" validate:"required"`
-EndDate   time.Time `json:"end_date" validate:"required,gtfield=StartDate"`
+// Example: oneof validator
+model.RegisterGlobalFunc("oneof", func(fieldName string, value interface{}, params map[string]interface{}) error {
+    str, ok := value.(string)
+    if !ok {
+        return nil
+    }
+    allowed := strings.Split(params["value"].(string), " ")
+    for _, v := range allowed {
+        if str == v {
+            return nil
+        }
+    }
+    return model.NewValidationError(fieldName, value, "oneof",
+        fmt.Sprintf("must be one of: %s", strings.Join(allowed, ", ")))
+})
+
+Status string `json:"status" validate:"oneof=draft published archived"`
 ```

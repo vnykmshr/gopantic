@@ -151,26 +151,14 @@ size := model.GetMaxInputSize()
 | `max=N` | Numbers | Maximum value | `validate:"max=100"` |
 | `min=N` | String, Slice | Minimum length | `validate:"min=3"` |
 | `max=N` | String, Slice | Maximum length | `validate:"max=50"` |
-| `len=N` | String, Slice | Exact length | `validate:"len=8"` |
+| `length=N` | String | Exact length | `validate:"length=8"` |
 | `email` | String | Valid email format | `validate:"email"` |
-| `url` | String | Valid URL | `validate:"url"` |
-| `uuid` | String | Valid UUID | `validate:"uuid"` |
-| `alpha` | String | Alphabetic only | `validate:"alpha"` |
+| `alpha` | String | Alphabetic only (a-zA-Z) | `validate:"alpha"` |
 | `alphanum` | String | Alphanumeric only | `validate:"alphanum"` |
-| `oneof` | String | One of listed values | `validate:"oneof=a b c"` |
-
-### Cross-Field Validators
-
-| Tag | Description | Example |
-|-----|-------------|---------|
-| `eqfield=F` | Equal to field F | `validate:"eqfield=Password"` |
-| `nefield=F` | Not equal to field F | `validate:"nefield=OldPassword"` |
-| `gtfield=F` | Greater than field F | `validate:"gtfield=Min"` |
-| `gtefield=F` | Greater than or equal | `validate:"gtefield=Start"` |
-| `ltfield=F` | Less than field F | `validate:"ltfield=Max"` |
-| `ltefield=F` | Less than or equal | `validate:"ltefield=End"` |
 
 ### Custom Validators
+
+Cross-field validators (like `eqfield`, `nefield`) are not built-in but can be easily added:
 
 ```go
 model.RegisterGlobalFunc("is_even", func(fieldName string, value interface{}, params map[string]interface{}) error {

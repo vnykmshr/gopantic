@@ -54,16 +54,17 @@ user, err := model.ParseIntoWithFormat[User](yamlData, model.FormatYAML)
 
 ## Validation
 
-Common validators:
+Built-in validators:
 
 | Validator | Example | Description |
 |-----------|---------|-------------|
 | `required` | `validate:"required"` | Non-zero value |
 | `min` | `validate:"min=5"` | Min value or length |
 | `max` | `validate:"max=100"` | Max value or length |
+| `length` | `validate:"length=10"` | Exact length |
 | `email` | `validate:"email"` | Email format |
-| `oneof` | `validate:"oneof=a b c"` | One of listed values |
-| `len` | `validate:"len=10"` | Exact length |
+| `alpha` | `validate:"alpha"` | Letters only |
+| `alphanum` | `validate:"alphanum"` | Letters and numbers |
 
 Combine with commas:
 
