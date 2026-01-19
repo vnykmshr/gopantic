@@ -88,3 +88,6 @@ NOTES.md
 
 ## Local development context
 .claude/
+
+## MkDocs generated site (deployed via gh-pages branch)
+site/
