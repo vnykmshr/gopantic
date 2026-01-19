@@ -1,23 +1,20 @@
 # Architecture & Design
 
-gopantic is designed for high-performance, type-safe parsing with minimal overhead. This document covers the core architecture, design decisions, and implementation details.
-
 ## Core Architecture
 
 ### Package Structure
 
 ```
 pkg/model/
-├── parse.go        → Main parsing logic and API
+├── doc.go          → Package documentation
+├── parse.go        → Main parsing logic and API (ParseInto, Validate)
 ├── format.go       → Format detection and parser abstraction
-├── json_parser.go  → JSON parsing implementation
-├── yaml_parser.go  → YAML parsing implementation
 ├── coerce.go       → Type coercion engine
-├── validate.go     → Validation framework
-├── validators.go   → Built-in validators
-├── time.go         → Time parsing utilities
-├── cache.go        → High-performance caching
-└── errors.go       → Error handling and aggregation
+├── validate.go     → Validation framework and registry
+├── validators.go   → Built-in validators (required, min, max, etc.)
+├── cache.go        → High-performance caching with FIFO eviction
+├── config.go       → Thread-safe configuration accessors
+└── errors.go       → Error types and aggregation
 ```
 
 ### Design Principles
@@ -170,7 +167,7 @@ type CachedParser[T any] struct {
 
 type CacheConfig struct {
     TTL             time.Duration // Entry lifetime (default: 1 hour)
-    MaxEntries      int           // LRU eviction limit (default: 1000)
+    MaxEntries      int           // FIFO eviction limit (default: 1000)
     CleanupInterval time.Duration // Background cleanup (default: 30 min)
 }
 ```
@@ -178,7 +175,7 @@ type CacheConfig struct {
 **Features:**
 - **Hit Rate Tracking**: Atomic counters for cache hits/misses
 - **Proactive Cleanup**: Background goroutine removes expired entries
-- **LRU Eviction**: Oldest entries removed when MaxEntries reached
+- **FIFO Eviction**: Oldest entries removed when MaxEntries reached
 - **Thread-Safe**: RWMutex for concurrent access
 
 ### Key Generation

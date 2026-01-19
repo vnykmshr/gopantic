@@ -1,7 +1,5 @@
 # Type Reference
 
-Complete guide to type support, coercion behavior, and limitations in gopantic.
-
 ## Supported Types
 
 | Type | Support | Coercion | Notes |
@@ -67,12 +65,11 @@ json.Unmarshal(account.MetadataRaw, &metadata)
 ```
 
 Common use cases:
+
 - PostgreSQL JSONB columns
 - Plugin/extension systems
 - Multi-tenant configurations
 - Event payloads with varying schemas
-
-See [database-integration.md](database-integration.md) for PostgreSQL examples.
 
 ## Nested Structs
 
@@ -81,7 +78,7 @@ Recursive validation works automatically:
 ```go
 type Address struct {
     City    string `json:"city" validate:"required"`
-    ZipCode string `json:"zip_code" validate:"length=5"`
+    ZipCode string `json:"zip_code" validate:"len=5"`
 }
 
 type User struct {
@@ -161,6 +158,7 @@ type Request struct {
 ## Time Handling
 
 Automatic support for:
+
 - RFC3339: `"2024-01-01T12:00:00Z"`
 - Unix timestamps: `1704067200`
 - ISO 8601: `"2024-01-01T12:00:00+00:00"`
@@ -296,53 +294,6 @@ type Valid struct {
 }
 ```
 
-### Validator Parameters with Commas
-
-**Problem**: Parser confusion
-
-```go
-type User struct {
-    Name string `validate:"oneof=Alice,Bob,Charlie"`  // Commas in params
-}
-```
-
-**Workaround**: Custom validator
-
-```go
-model.RegisterGlobalFunc("valid_name", func(fieldName string, fieldValue interface{}, params map[string]interface{}) error {
-    validNames := []string{"Alice", "Bob", "Charlie"}
-    // validation logic
-})
-
-type User struct {
-    Name string `validate:"required,valid_name"`
-}
-```
-
-### Deep Nested Collections
-
-**Problem**: Slices of maps have limited validation
-
-```go
-type Data struct {
-    Records []map[string]interface{} `json:"records"`
-    // Can't validate map contents
-}
-```
-
-**Workaround**: Define struct types
-
-```go
-type Data struct {
-    Records []Record `json:"records"`
-}
-
-type Record struct {
-    ID    string `json:"id" validate:"required"`
-    Value string `json:"value" validate:"required"`
-}
-```
-
 ## Edge Cases
 
 ### Zero Values vs Missing Fields
@@ -369,6 +320,7 @@ type Request struct {
 ### Large json.RawMessage
 
 `json.RawMessage` keeps entire JSON in memory. For large fields (>1MB), consider:
+
 - External storage (S3, database BLOB)
 - Streaming/chunked processing
 - Compression
@@ -388,7 +340,7 @@ Use slices with length validation:
 
 ```go
 type Data struct {
-    Scores []float64 `json:"scores" validate:"required,length=3"`
+    Scores []float64 `json:"scores" validate:"required,len=3"`
 }
 ```
 
@@ -411,6 +363,5 @@ type Data struct {
 ## See Also
 
 - [API Reference](api.md) - Complete API documentation
-- [Database Integration](database-integration.md) - PostgreSQL JSONB patterns
-- [Migration Guide](migration.md) - Switching from other libraries
-- [Architecture](architecture.md) - Implementation details
+- [Migration Guide](../migration.md) - Switching from other libraries
+- [Architecture](../architecture.md) - Implementation details

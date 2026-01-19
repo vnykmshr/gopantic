@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Security
+
+- **Fixed cache key hash collision vulnerability**: Cache keys now use full SHA256 hash instead of truncated 64-bit hash for large inputs (≥1KB), preventing potential cache poisoning attacks
+- **Thread-safe configuration**: Added Get/Set functions with synchronization for `MaxInputSize`, `MaxCacheSize`, and `MaxValidationDepth`
+- **SECURITY.md**: Updated comprehensive security policy with detailed documentation
+
+### Added
+
+- **Documentation site**: New documentation at [vnykmshr.github.io/gopantic](https://vnykmshr.github.io/gopantic/) with MkDocs Material theme
+  - Dark/light mode toggle
+  - Full-text search
+  - Organized guide and reference sections
+- **"Why gopantic" narrative**: New building-gopantic.md explaining the problem, solution, and design decisions
+- **Expanded cache tests**: Cache module test coverage significantly improved
+
+### Changed
+
+- **Documentation structure**: Reorganized docs into clear guide/ and reference/ hierarchy
+- **Documentation quality**: All docs reviewed for accuracy and clarity
+- **PostgreSQL tutorial**: Moved to examples/postgresql_jsonb/ as runnable code
+
+### Fixed
+
+- **Custom validator docs**: Corrected function signatures in validation.md to match actual API
+- **architecture.md**: Fixed cache terminology (FIFO, not LRU) and package file list
+- **migration.md**: Corrected validator references (`alphanum` not `alphanumeric`)
+
+### Deprecation Notices
+
+- Direct modification of `MaxInputSize`, `MaxCacheSize`, `MaxValidationDepth` is deprecated
+- Use `GetMaxInputSize()`/`SetMaxInputSize()` and equivalent functions instead
+- Old variables still work but may be removed in v2.0
+
+---
+
 ## [1.2.0] - 2025-11-23
 
 ### Added

@@ -1,7 +1,5 @@
 # API Reference
 
-Complete API documentation for gopantic.
-
 ## Core Functions
 
 ### ParseInto
@@ -57,17 +55,18 @@ Auto-detects JSON or YAML format. Looks for JSON markers (`{`, `[`), YAML marker
 ### NewCachedParser
 
 ```go
-func NewCachedParser[T any](config *CacheConfig) (*CachedParser[T], error)
+func NewCachedParser[T any](config *CacheConfig) *CachedParser[T]
 ```
 
 Creates a cached parser instance.
 
 ```go
 config := &model.CacheConfig{
-    TTL:        5 * time.Minute,
-    MaxEntries: 1000,
+    TTL:             5 * time.Minute,
+    MaxEntries:      1000,
+    CleanupInterval: 2 * time.Minute,
 }
-parser, err := model.NewCachedParser[User](config)
+parser := model.NewCachedParser[User](config)
 defer parser.Close()
 ```
 
@@ -75,10 +74,23 @@ defer parser.Close()
 
 ```go
 func (cp *CachedParser[T]) Parse(data []byte) (T, error)
+func (cp *CachedParser[T]) ParseWithFormat(data []byte, format Format) (T, error)
 func (cp *CachedParser[T]) Stats() (size, maxSize int, hitRate float64)
 func (cp *CachedParser[T]) ClearCache()
 func (cp *CachedParser[T]) Close()
 ```
+
+### DefaultCacheConfig
+
+```go
+func DefaultCacheConfig() *CacheConfig
+```
+
+Returns sensible defaults:
+
+- TTL: 1 hour
+- MaxEntries: 1000
+- CleanupInterval: 30 minutes
 
 ## Configuration
 
@@ -86,19 +98,46 @@ func (cp *CachedParser[T]) Close()
 
 ```go
 type CacheConfig struct {
-    TTL             time.Duration // Default: 30 minutes
-    MaxEntries      int           // Default: 1000
-    Namespace       string        // Default: "gopantic"
-    CleanupInterval time.Duration // Default: 5 minutes
+    TTL             time.Duration // Time to live for cached entries (default: 1 hour)
+    MaxEntries      int           // Maximum number of cached entries (default: 1000)
+    CleanupInterval time.Duration // How often to run cleanup (default: TTL/2, 0 to disable)
 }
 ```
 
-### Global Variables
+### Global Configuration
+
+Package-level configuration variables:
 
 ```go
 var MaxInputSize = 10 * 1024 * 1024  // Max 10MB input (0 = unlimited)
 var MaxCacheSize = 1000               // Max validation metadata cache (0 = unlimited)
-var MaxValidationDepth = 32           // Max nested struct depth (0 = unlimited)
+var MaxValidationDepth = 32           // Max nested struct depth
+```
+
+**Warning:** Direct modification of these variables is NOT thread-safe. Use the Get/Set functions for concurrent access.
+
+### Thread-Safe Accessors
+
+```go
+// MaxInputSize
+func GetMaxInputSize() int
+func SetMaxInputSize(size int)
+
+// MaxCacheSize
+func GetMaxCacheSize() int
+func SetMaxCacheSize(size int)
+
+// MaxValidationDepth
+func GetMaxValidationDepth() int
+func SetMaxValidationDepth(depth int)
+```
+
+Example:
+
+```go
+// Safe for concurrent use
+model.SetMaxInputSize(5 * 1024 * 1024)  // 5MB
+size := model.GetMaxInputSize()
 ```
 
 ## Validation Tags
@@ -112,40 +151,35 @@ var MaxValidationDepth = 32           // Max nested struct depth (0 = unlimited)
 | `max=N` | Numbers | Maximum value | `validate:"max=100"` |
 | `min=N` | String, Slice | Minimum length | `validate:"min=3"` |
 | `max=N` | String, Slice | Maximum length | `validate:"max=50"` |
-| `length=N` | String, Slice | Exact length | `validate:"length=8"` |
+| `len=N` | String, Slice | Exact length | `validate:"len=8"` |
 | `email` | String | Valid email format | `validate:"email"` |
-| `alpha` | String | Alphabetic only (a-z, A-Z) | `validate:"alpha"` |
+| `url` | String | Valid URL | `validate:"url"` |
+| `uuid` | String | Valid UUID | `validate:"uuid"` |
+| `alpha` | String | Alphabetic only | `validate:"alpha"` |
 | `alphanum` | String | Alphanumeric only | `validate:"alphanum"` |
+| `oneof` | String | One of listed values | `validate:"oneof=a b c"` |
 
-### Combined Rules
+### Cross-Field Validators
 
-```go
-type User struct {
-    Name string `json:"name" validate:"required,min=2,max=50,alpha"`
-    Age  int    `json:"age" validate:"required,min=18,max=120"`
-}
-```
+| Tag | Description | Example |
+|-----|-------------|---------|
+| `eqfield=F` | Equal to field F | `validate:"eqfield=Password"` |
+| `nefield=F` | Not equal to field F | `validate:"nefield=OldPassword"` |
+| `gtfield=F` | Greater than field F | `validate:"gtfield=Min"` |
+| `gtefield=F` | Greater than or equal | `validate:"gtefield=Start"` |
+| `ltfield=F` | Less than field F | `validate:"ltfield=Max"` |
+| `ltefield=F` | Less than or equal | `validate:"ltefield=End"` |
 
 ### Custom Validators
 
 ```go
-model.RegisterGlobalFunc("strong_password", func(fieldName string, value interface{}, params map[string]interface{}) error {
-    password, ok := value.(string)
-    if !ok || len(password) < 8 {
-        return model.NewValidationError(fieldName, value, "strong_password", "password must be at least 8 characters")
+model.RegisterGlobalFunc("is_even", func(fieldName string, value interface{}, params map[string]interface{}) error {
+    num, ok := value.(int)
+    if !ok {
+        return nil
     }
-    return nil
-})
-```
-
-### Cross-Field Validators
-
-```go
-model.RegisterGlobalCrossFieldFunc("password_match", func(fieldName string, fieldValue interface{}, structValue reflect.Value, params map[string]interface{}) error {
-    password := structValue.FieldByName("Password").Interface().(string)
-    confirmPassword := fieldValue.(string)
-    if password != confirmPassword {
-        return model.NewValidationError(fieldName, fieldValue, "password_match", "passwords do not match")
+    if num%2 != 0 {
+        return model.NewValidationError(fieldName, value, "is_even", "must be even")
     }
     return nil
 })
@@ -164,6 +198,7 @@ Automatic conversion between compatible types:
 | `time.Time` | `string`, `int` | RFC3339, Unix timestamps |
 
 **Boolean coercion:**
+
 - Truthy: `"true"`, `"yes"`, `"1"`, `"on"`, `1`, non-zero
 - Falsy: `"false"`, `"no"`, `"0"`, `"off"`, `""`, `0`
 
@@ -199,19 +234,13 @@ Returned for validation failures.
 
 ### Multiple Errors
 
-Aggregated as: `"multiple errors: validation error on field 'ID': field is required; parse error on field 'Age': cannot convert string 'invalid' to integer"`
+Multiple errors are aggregated:
 
-### Security: Error Messages
-
-**Important:** Error messages include field values. Sanitize before logging/displaying:
-
-```go
-user, err := model.ParseInto[User](data)
-if err != nil {
-    log.Error("parse failed", "error", err)  // Internal: full details
-    return errors.New("invalid request")      // External: sanitized
-}
 ```
+multiple errors: validation error on field 'ID': field is required; parse error on field 'Age': cannot convert string 'invalid' to integer
+```
+
+**Security note:** Error messages include field values. Sanitize before logging or returning to clients.
 
 ## Struct Tags
 
@@ -236,56 +265,8 @@ type Config struct {
 
 Falls back to JSON tag if YAML tag is missing.
 
-## Best Practices
-
-### Performance
-
-- Use `NewCachedParser` for repeated parsing
-- Specify format explicitly when known
-- Minimize validation rules
-- Reuse parser instances
-
-### Error Handling
-
-```go
-user, err := model.ParseInto[User](data)
-if err != nil {
-    if parseErr, ok := err.(*model.ParseError); ok {
-        log.Printf("Parse error in %s: %s", parseErr.Field, parseErr.Message)
-    }
-    return err
-}
-```
-
-### Memory Management
-
-```go
-parser := model.NewCachedParser[User](nil)
-defer parser.Close()  // Cleanup resources
-
-for data := range dataChannel {
-    user, err := parser.Parse(data)
-    // ... handle
-}
-```
-
-### Struct Design
-
-```go
-type User struct {
-    ID      int       `json:"id" validate:"required,min=1"`
-    Email   string    `json:"email" validate:"required,email"`
-    Name    string    `json:"name" validate:"required,min=2,max=50"`
-    Age     *int      `json:"age,omitempty" validate:"min=0,max=150"` // Optional
-    Created time.Time `json:"created_at"`
-}
-```
-
-Use pointers for optional fields to distinguish nil from zero value.
-
 ## See Also
 
-- [Type Reference](type-reference.md) - Supported types and limitations
-- [Migration Guide](migration.md) - Switching from other libraries
-- [Architecture](architecture.md) - Implementation details
-- [Examples](../examples/) - Working code examples
+- [Types Reference](types.md) - Supported types and limitations
+- [Migration Guide](../migration.md) - Switching from other libraries
+- [Architecture](../architecture.md) - Implementation details
