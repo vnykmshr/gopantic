@@ -8,9 +8,6 @@ run:
 
 output:
   show-stats: false
-  formats:
-    colored-line-number:
-      path: stdout
 
 linters:
   default: none
