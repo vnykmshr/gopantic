@@ -313,6 +313,48 @@ func TestCachedParser_LargeInputHashing(t *testing.T) {
 	}
 }
 
+// TestCachedParser_LargeInputCollisionResistance verifies different large inputs get different cache entries
+func TestCachedParser_LargeInputCollisionResistance(t *testing.T) {
+	parser := model.NewCachedParser[CacheTestUser](nil)
+	defer parser.Close()
+
+	// Create two different large inputs (>1KB each)
+	name1 := make([]byte, 2000)
+	name2 := make([]byte, 2000)
+	for i := range name1 {
+		name1[i] = 'a'
+		name2[i] = 'b' // Different content
+	}
+	data1 := []byte(fmt.Sprintf(`{"id": 1, "name": "%s"}`, string(name1)))
+	data2 := []byte(fmt.Sprintf(`{"id": 2, "name": "%s"}`, string(name2)))
+
+	// Parse first input
+	result1, err := parser.Parse(data1)
+	if err != nil {
+		t.Fatalf("Parse data1 failed: %v", err)
+	}
+	if result1.ID != 1 {
+		t.Errorf("Expected ID 1, got %d", result1.ID)
+	}
+
+	// Parse second input - should not return cached result from first
+	result2, err := parser.Parse(data2)
+	if err != nil {
+		t.Fatalf("Parse data2 failed: %v", err)
+	}
+	if result2.ID != 2 {
+		t.Errorf("Expected ID 2, got %d (cache collision detected)", result2.ID)
+	}
+
+	// Verify both are cached separately
+	result1Again, _ := parser.Parse(data1)
+	result2Again, _ := parser.Parse(data2)
+
+	if result1Again.ID != 1 || result2Again.ID != 2 {
+		t.Error("Cache should store different entries for different large inputs")
+	}
+}
+
 // TestCachedParser_EmptyInput verifies empty input handling
 func TestCachedParser_EmptyInput(t *testing.T) {
 	parser := model.NewCachedParser[CacheTestUser](nil)
