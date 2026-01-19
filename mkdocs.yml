@@ -1,0 +1,65 @@
+site_name: gopantic
+site_url: https://vnykmshr.github.io/gopantic/
+site_description: Type-safe JSON/YAML parsing with validation for Go
+repo_url: https://github.com/vnykmshr/gopantic
+repo_name: vnykmshr/gopantic
+
+theme:
+  name: material
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+plugins:
+  - search
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - admonition
+  - pymdownx.details
+  - tables
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Guide:
+    - Validation: guide/validation.md
+    - Caching: guide/caching.md
+  - Reference:
+    - API: reference/api.md
+    - Types: reference/types.md
+  - Migration: migration.md
+  - Changelog: CHANGELOG.md
+  - Architecture: architecture.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/vnykmshr/gopantic
+
+copyright: Copyright &copy; 2025 - MIT License

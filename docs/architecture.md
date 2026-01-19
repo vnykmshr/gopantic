@@ -8,16 +8,15 @@ gopantic is designed for high-performance, type-safe parsing with minimal overhe
 
 ```
 pkg/model/
-├── parse.go        → Main parsing logic and API
+├── doc.go          → Package documentation
+├── parse.go        → Main parsing logic and API (ParseInto, Validate)
 ├── format.go       → Format detection and parser abstraction
-├── json_parser.go  → JSON parsing implementation
-├── yaml_parser.go  → YAML parsing implementation
 ├── coerce.go       → Type coercion engine
-├── validate.go     → Validation framework
-├── validators.go   → Built-in validators
-├── time.go         → Time parsing utilities
-├── cache.go        → High-performance caching
-└── errors.go       → Error handling and aggregation
+├── validate.go     → Validation framework and registry
+├── validators.go   → Built-in validators (required, min, max, etc.)
+├── cache.go        → High-performance caching with FIFO eviction
+├── config.go       → Thread-safe configuration accessors
+└── errors.go       → Error types and aggregation
 ```
 
 ### Design Principles

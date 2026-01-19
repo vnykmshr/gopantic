@@ -5,10 +5,12 @@
 Inspired by Python's Pydantic, gopantic provides type-safe parsing, coercion, and validation with idiomatic Go APIs.
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/vnykmshr/gopantic.svg)](https://pkg.go.dev/github.com/vnykmshr/gopantic)
-[![Go Version](https://img.shields.io/badge/go-1.25+-blue.svg)](https://golang.org/dl/)
+[![Go Version](https://img.shields.io/badge/go-1.23+-blue.svg)](https://golang.org/dl/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![CI](https://github.com/vnykmshr/gopantic/actions/workflows/ci.yml/badge.svg)](https://github.com/vnykmshr/gopantic/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/vnykmshr/gopantic/branch/main/graph/badge.svg)](https://codecov.io/gh/vnykmshr/gopantic)
+
+> **Full Documentation**: [vnykmshr.github.io/gopantic](https://vnykmshr.github.io/gopantic/)
 
 ## Quick Start
 
@@ -234,15 +236,18 @@ make hooks
 
 ## Documentation
 
-- [API Reference](docs/api.md) - Complete API documentation with examples
-- [Advanced Type Handling](docs/advanced-types.md) - Complex types, json.RawMessage, nested validation
-- [Database Integration](docs/database-integration.md) - PostgreSQL JSONB patterns and ORM integration
-- [Limitations](docs/limitations.md) - Current limitations and workarounds
-- [Migration Guide](docs/migration.md) - Migrating from encoding/json, validator, etc.
-- [Architecture & Design](docs/architecture.md) - Implementation details and design decisions
-- [Examples](examples/) - Practical usage examples
-- [Security Policy](.github/SECURITY.md) - Vulnerability reporting and security considerations
-- [Changelog](docs/CHANGELOG.md) - Version history and changes
+**Full documentation**: [vnykmshr.github.io/gopantic](https://vnykmshr.github.io/gopantic/)
+
+Quick links:
+- [Getting Started](https://vnykmshr.github.io/gopantic/getting-started/) - Installation and basic usage
+- [API Reference](https://vnykmshr.github.io/gopantic/reference/api/) - Complete API documentation
+- [Validation Guide](https://vnykmshr.github.io/gopantic/guide/validation/) - All validation options
+- [Migration Guide](https://vnykmshr.github.io/gopantic/migration/) - Coming from other libraries
+- [Examples](examples/) - Runnable code examples
+
+**Resources**:
+- [Changelog](https://vnykmshr.github.io/gopantic/CHANGELOG/) - Version history
+- [Security Policy](.github/SECURITY.md) - Vulnerability reporting
 
 ## License
 
