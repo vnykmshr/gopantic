@@ -88,85 +88,16 @@ jobs:
           echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
         fi
 
-    - name: Generate changelog
-      id: changelog
-      run: |
-        # Get previous tag
-        PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-        
-        if [ -n "$PREVIOUS_TAG" ]; then
-          echo "## Changes since $PREVIOUS_TAG" > CHANGELOG.md
-          echo "" >> CHANGELOG.md
-          
-          # Get commits since last tag
-          git log ${PREVIOUS_TAG}..HEAD --oneline --pretty=format:"- %s" >> CHANGELOG.md
-          echo "" >> CHANGELOG.md
-        else
-          echo "## Initial Release" > CHANGELOG.md
-          echo "" >> CHANGELOG.md
-          echo "🎉 First release of gopantic - High-performance Go data parsing and validation library" >> CHANGELOG.md
-          echo "" >> CHANGELOG.md
-        fi
-        
-        # Add performance highlights
-        echo "" >> CHANGELOG.md
-        echo "## 🚀 Performance Highlights" >> CHANGELOG.md
-        echo "" >> CHANGELOG.md
-        echo "- **17-45% faster** than standard library JSON parsing" >> CHANGELOG.md
-        echo "- **Memory optimization** through struct info caching and object pooling" >> CHANGELOG.md
-        echo "- **Distributed caching** support with Redis backend" >> CHANGELOG.md
-        echo "- **Comprehensive validation** with cross-field support" >> CHANGELOG.md
-        echo "" >> CHANGELOG.md
-        echo "## 📚 Documentation" >> CHANGELOG.md
-        echo "" >> CHANGELOG.md
-        echo "- [Migration Guide](docs/MIGRATION_GUIDE.md)" >> CHANGELOG.md
-        echo "- [Best Practices](docs/BEST_PRACTICES.md)" >> CHANGELOG.md  
-        echo "- [API Documentation](pkg/model/)" >> CHANGELOG.md
-        echo "- [Examples](examples/)" >> CHANGELOG.md
-        
-        # Set output for GitHub release
-        echo "changelog<<EOF" >> $GITHUB_OUTPUT
-        cat CHANGELOG.md >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
-
     - name: Run release benchmarks
       run: |
-        echo "# 📊 Release Performance Benchmarks" > BENCHMARKS.md
-        echo "" >> BENCHMARKS.md
-        echo "\`\`\`" >> BENCHMARKS.md
+        echo '```' > BENCHMARKS.md
         make bench-compare >> BENCHMARKS.md 2>&1
-        echo "\`\`\`" >> BENCHMARKS.md
-        echo "" >> BENCHMARKS.md
-        echo "Generated on $(date) for release ${{ steps.version.outputs.version }}" >> BENCHMARKS.md
+        echo '```' >> BENCHMARKS.md
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ steps.version.outputs.version }}
-        name: "Release ${{ steps.version.outputs.version }}"
-        body: |
-          ${{ steps.changelog.outputs.changelog }}
-          
-          ## 📊 Performance Benchmarks
-          
-          See the benchmark results in the release assets below.
-          
-          ## 🔧 Installation
-          
-          ```bash
-          go get github.com/1mb-dev/gopantic@${{ steps.version.outputs.version }}
-          ```
-          
-          ## ✅ Validation
-          
-          This release has been validated with:
-          - ✅ Full test suite with race condition detection
-          - ✅ Cross-platform compatibility (Linux, macOS, Windows)
-          - ✅ Go versions 1.20, 1.21 compatibility
-          - ✅ Performance regression testing
-          - ✅ Security scanning
-          - ✅ All examples verified working
-        draft: false
-        prerelease: false
+        generate_release_notes: true
         files: |
           BENCHMARKS.md
