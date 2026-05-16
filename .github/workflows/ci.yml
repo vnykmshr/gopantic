@@ -163,7 +163,7 @@ jobs:
         echo "\`\`\`" >> benchmark_results.md
 
     - name: Comment benchmark results
-      uses: actions/github-script@v8
+      uses: actions/github-script@v9
       if: github.event_name == 'pull_request'
       continue-on-error: true
       with:
@@ -303,7 +303,7 @@ jobs:
         fi
 
     - name: Comment performance comparison
-      uses: actions/github-script@v8
+      uses: actions/github-script@v9
       continue-on-error: true
       with:
         script: |

@@ -110,7 +110,7 @@ jobs:
         go test -bench=. -benchmem ./tests > current_benchmarks.txt
 
     - name: Create performance issue on regression
-      uses: actions/github-script@v8
+      uses: actions/github-script@v9
       if: failure()
       with:
         script: |
@@ -128,7 +128,7 @@ jobs:
           }
 
     - name: Post performance summary
-      uses: actions/github-script@v8
+      uses: actions/github-script@v9
       if: success()
       with:
         script: |
